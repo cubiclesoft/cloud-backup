@@ -1,0 +1,8 @@
+/config.dat
+/files.db
+/files_id.dat
+/files2.db
+/files2.db-journal
+/test.php
+/cache/*
+/restore/*
