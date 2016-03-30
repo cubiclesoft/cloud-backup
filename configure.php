@@ -250,21 +250,35 @@
 			$from = trim(fgets(STDIN));
 			echo "Subject line (e.g. [Backup] Some computer name):  ";
 			$subject = trim(fgets(STDIN));
-			echo "SMTP server (without port):  ";
-			$server = trim(fgets(STDIN));
-			echo "SMTP port (usually 25, 465, or 587):  ";
-			$port = (int)trim(fgets(STDIN));
-			echo "SMTP over SSL/TLS (Y/N):  ";
-			$secure = (substr(strtoupper(trim(fgets(STDIN))), 0, 1) == "Y");
-			echo "SMTP username (optional):  ";
-			$username = trim(fgets(STDIN));
-			echo "SMTP password (optional):  ";
-			$password = trim(fgets(STDIN));
+			echo "PHP mail() command (Y/N):  ";
+			$usemail = (substr(strtoupper(trim(fgets(STDIN))), 0, 1) == "Y");
+			if ($usemail)
+			{
+				$server = "";
+				$port = 25;
+				$secure = false;
+				$username = "";
+				$password = "";
+			}
+			else
+			{
+				echo "SMTP server (without port):  ";
+				$server = trim(fgets(STDIN));
+				echo "SMTP port (usually 25, 465, or 587):  ";
+				$port = (int)trim(fgets(STDIN));
+				echo "SMTP over SSL/TLS (Y/N):  ";
+				$secure = (substr(strtoupper(trim(fgets(STDIN))), 0, 1) == "Y");
+				echo "SMTP username (optional):  ";
+				$username = trim(fgets(STDIN));
+				echo "SMTP password (optional):  ";
+				$password = trim(fgets(STDIN));
+			}
 
 			$data = array(
 				"filter" => $filter,
 				"from" => $from,
 				"subject" => $subject,
+				"usemail" => $usemail,
 				"server" => $server,
 				"port" => $port,
 				"secure" => $secure,

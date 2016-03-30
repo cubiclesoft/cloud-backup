@@ -122,13 +122,18 @@
 				echo "\tRetrieving files database statistics...\n";
 				$numfiles = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 0"), "files");
 				$numsharedfiles = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
+				$numsharedblocks = (int)$db->GetOne("SELECT", array("COUNT(DISTINCT blocknum)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
 				$numemptyfiles = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 1"), "files");
 				$numsymlinks = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 0 AND symlink <> ''"), "files");
 				$numdirs = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 0 AND symlink = ''"), "files");
 
 				echo "\tSymlinks:  " . number_format($numsymlinks, 0) . "\n";
 				echo "\tFolders:  " . number_format($numdirs, 0) . "\n";
-				echo "\tFiles:  " . number_format($numsharedfiles, 0) . " shared, " . number_format($numfiles, 0) . " non-shared, " . number_format($numemptyfiles, 0) . " empty, " . number_format($numsharedfiles + $numfiles + $numemptyfiles, 0) . " total\n";
+				echo "\tFiles:\n";
+				echo "\t\t" . number_format($numsharedfiles, 0) . " shared (" . number_format($numsharedblocks, 0) . " blocks)\n";
+				echo "\t\t" . number_format($numfiles, 0) . " non-shared\n";
+				echo "\t\t" . number_format($numemptyfiles, 0) . " empty\n";
+				echo "\t\t" . number_format($numsharedfiles + $numfiles + $numemptyfiles, 0) . " total (" . number_format($numsharedblocks + $numfiles, 0) . " blocks)\n";
 
 				// Verify that all blocks in the database are in the block list.
 				echo "\tRetrieving all unique blocks in the database...\n";

@@ -30,6 +30,9 @@
 	$incrementaltimes = $result["summary"]["incrementaltimes"];
 	$lastbackupid = $result["summary"]["lastbackupid"];
 
+	$services = CB_GetBackupServices();
+	if (isset($services[$servicename]))  $servicename = $services[$servicename];
+
 	function CleanupCache()
 	{
 		global $rootpath;

@@ -25,6 +25,9 @@
 	$servicename = $result["servicename"];
 	$service = $result["service"];
 
+	$services = CB_GetBackupServices();
+	if (isset($services[$servicename]))  $servicename = $services[$servicename];
+
 	echo "Testing " . $servicename . "...\n";
 	$service->Test();
 
