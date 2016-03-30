@@ -61,7 +61,6 @@
 		$id = $result["dir"][count($result["dir"]) - 1]["id"];
 
 		$dirfiles = CB_GetDBFiles($id, false);
-		uksort($dirfiles, "strnatcasecmp");
 
 		if (!isset($args["opts"]["regex"]))  $args["opts"]["regex"] = array('/.*/');
 
@@ -278,7 +277,8 @@
 			return;
 		}
 		$path = $result["path"];
-		$id = $result["dir"][count($result["dir"]) - 1]["id"];
+		$dirinfo = $result["dir"][count($result["dir"]) - 1];
+		$id = $dirinfo["id"];
 
 		// Create the restoration directory.
 		$basepath = $rootpath . "/restore";
@@ -286,7 +286,29 @@
 		$basepath .= "/" . date("Ymd_His");
 		@mkdir($basepath);
 
-		$dirfiles = CB_GetDBFiles($id, false);
+		if (!isset($dirinfo["file"]))  $dirfiles = CB_GetDBFiles($id, false);
+		else
+		{
+			// Handle extraction of a single file.
+			$row = $dirinfo["file"];
+
+			$dirfiles = array();
+			$dirfiles[$row->name] = array(
+				"id" => $row->id,
+				"blocknum" => $row->blocknum,
+				"sharedblock" => (int)$row->sharedblock,
+				"name" => $row->name,
+				"symlink" => $row->symlink,
+				"attributes" => (int)$row->attributes,
+				"owner" => $row->owner,
+				"group" => $row->group,
+				"filesize" => $row->realfilesize,
+				"lastmodified" => $row->lastmodified,
+				"created" => $row->created,
+			);
+
+			$id = $row->pid;
+		}
 		$stack = array(array("pid" => $id, "path" => $basepath, "files" => $dirfiles));
 		$sharedcache = array();
 		while (count($stack))

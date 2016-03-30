@@ -134,10 +134,10 @@
 
 	function CalculateRealpath($path)
 	{
-		global $pathstack, $db;
+		global $rootpathstack, $pathstack, $db;
 
 		$path = str_replace("\\", "/", $path);
-		if (substr($path, 0, 1) === "/")  $result = array(array("id" => 0, "name" => ""));
+		if (substr($path, 0, 1) === "/")  $result = $rootpathstack;
 		else  $result = $pathstack;
 		$parts = explode("/", $path);
 
@@ -159,7 +159,7 @@
 				try
 				{
 					$row = $db->GetRow("SELECT", array(
-						"id, name, symlink, attributes",
+						"*",
 						"FROM" => "?",
 						"WHERE" => "pid = ? AND name = ?"
 					), "files", $result[count($result) - 1]["id"], $part);
@@ -189,6 +189,8 @@
 				else
 				{
 					if (count($parts))  return array("success" => false, "error" => "File encountered at '" . $part . "' while resolving the path '" . $path . "'.  Expected a folder or a symbolic link.", "errorcode" => "file_encountered", "info" => $result);
+
+					$result[] = array("id" => $row->id, "name" => $row->name, "file" => $row);
 				}
 			}
 		}
@@ -211,7 +213,10 @@
 	require_once $rootpath . "/support/cli.php";
 
 	echo "Ready.  This is a command-line interface.  Enter 'help' to get a list of available commands.\n\n";
-	$pathstack = array(array("id" => 0, "name" => ""));
+
+	$rootid = (int)$db->GetOne("SELECT", array("id", "FROM" => "?", "WHERE" => "pid = 0 AND name = ''"), "files");
+	$rootpathstack = array(array("id" => $rootid, "name" => ""));
+	$pathstack = $rootpathstack;
 	echo $servicename . " [" . $backupnum . "]:" . PathStackToStr($pathstack) . ">";
 	while (($line = fgets(STDIN)) !== false)
 	{

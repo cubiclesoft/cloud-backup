@@ -201,6 +201,8 @@
 			closedir($dir);
 		}
 
+		uksort($result, "strnatcasecmp");
+
 		return $result;
 	}
 
@@ -232,6 +234,8 @@
 				"created" => $row->created,
 			);
 		}
+
+		uksort($result, "strnatcasecmp");
 
 		return $result;
 	}
