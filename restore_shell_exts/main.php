@@ -58,9 +58,32 @@
 			return;
 		}
 		$path = $result["path"];
-		$id = $result["dir"][count($result["dir"]) - 1]["id"];
+		$dirinfo = $result["dir"][count($result["dir"]) - 1];
+		$id = $dirinfo["id"];
 
-		$dirfiles = CB_GetDBFiles($id, false);
+		if (!isset($dirinfo["file"]))  $dirfiles = CB_GetDBFiles($id, false);
+		else
+		{
+			// Handle extraction of a single file.
+			$row = $dirinfo["file"];
+
+			$dirfiles = array();
+			$dirfiles[$row->name] = array(
+				"id" => $row->id,
+				"blocknum" => $row->blocknum,
+				"sharedblock" => (int)$row->sharedblock,
+				"name" => $row->name,
+				"symlink" => $row->symlink,
+				"attributes" => (int)$row->attributes,
+				"owner" => $row->owner,
+				"group" => $row->group,
+				"filesize" => $row->realfilesize,
+				"lastmodified" => $row->lastmodified,
+				"created" => $row->created,
+			);
+
+			$id = $row->pid;
+		}
 
 		if (!isset($args["opts"]["regex"]))  $args["opts"]["regex"] = array('/.*/');
 
@@ -224,6 +247,15 @@
 		if (!$result["success"])
 		{
 			CB_DisplayError("Unable to calculate path for '" . $path . "'.", $result, false);
+
+			return;
+		}
+
+		$dirinfo = $result["dir"][count($result["dir"]) - 1];
+
+		if (isset($dirinfo["file"]))
+		{
+			CB_DisplayError("The specified path '" . $path . "' is a file.", false, false);
 
 			return;
 		}
