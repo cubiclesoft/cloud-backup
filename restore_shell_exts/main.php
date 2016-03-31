@@ -12,6 +12,7 @@
 					"a" => "all",
 					"b" => "blocks",
 					"l" => "long",
+					"p" => "percentages",
 					"r" => "regex",
 					"R" => "recursive",
 					"?" => "help"
@@ -20,6 +21,7 @@
 					"all" => array("arg" => false),
 					"blocks" => array("arg" => false),
 					"long" => array("arg" => false),
+					"percentages" => array("arg" => false),
 					"regex" => array("arg" => true, "multiple" => true),
 					"recursive" => array("arg" => false),
 					"help" => array("arg" => false)
@@ -38,8 +40,9 @@
 			echo "Syntax:  " . $args["file"] . " [options] [path]\n";
 			echo "Options:\n";
 			echo "\t-a         All files and directories.\n";
-			echo "\t-b         Include physical block storage.\n";
+			echo "\t-b         Include physical block storage (implies -l).\n";
 			echo "\t-l         Long listing format.\n";
+			echo "\t-p         Percent of original file size (implies -l).\n";
 			echo "\t-r=regex   Regular expression match.\n";
 			echo "\t-R         Recursive scan.\n";
 			echo "\t-?         This help documentation.\n";
@@ -78,6 +81,7 @@
 				"owner" => $row->owner,
 				"group" => $row->group,
 				"filesize" => $row->realfilesize,
+				"compressedsize" => $row->compressedsize,
 				"lastmodified" => $row->lastmodified,
 				"created" => $row->created,
 			);
@@ -88,6 +92,9 @@
 		if (!isset($args["opts"]["regex"]))  $args["opts"]["regex"] = array('/.*/');
 
 		$blocks = isset($args["opts"]["blocks"]);
+		$percentages = isset($args["opts"]["percentages"]);
+
+		if ($blocks || $percentages)  $args["opts"]["long"] = true;
 
 		// Calculate column widths.
 		if (isset($args["opts"]["long"]))
@@ -96,6 +103,7 @@
 			$maxgroup = 0;
 			$maxfullsize = 0;
 			$maxblocknumsize = 0;
+			$maxpercentagesize = 0;
 			foreach ($dirfiles as $name => $info)
 			{
 				if (isset($args["opts"]["all"]) || substr($name, 0, 1) != ".")
@@ -111,6 +119,12 @@
 							if (strlen($fullsize) > $maxfullsize)  $maxfullsize = strlen($fullsize);
 
 							if ($blocks && strlen($info["blocknum"]) > $maxblocknumsize)  $maxblocknumsize = strlen($info["blocknum"]);
+
+							if ($percentages)
+							{
+								$percentsize = strlen(number_format(($info["compressedsize"] + 12) / $info["filesize"] * 100, 0) . "%");
+								if ($percentsize > $maxpercentagesize)  $maxpercentagesize = $percentsize;
+							}
 
 							break;
 						}
@@ -181,7 +195,7 @@
 						else  $attr .= "-";
 
 						// Output:  Attributes Owner Group Created Filesize[ Blocknum]
-						echo $attr . " " . sprintf("%-" . $maxowner . "s", $info["owner"]) . " " . sprintf("%-" . $maxgroup . "s", $info["group"]) . " " . sprintf("%" . $maxfullsize . "s", number_format($info["filesize"], 0)) . ($blocks ? " " . sprintf("%" . $maxblocknumsize . "s", $info["blocknum"]) : "") . " " . date("Y-M-d h:i A", $info["created"]) . "  ";
+						echo $attr . " " . sprintf("%-" . $maxowner . "s", $info["owner"]) . " " . sprintf("%-" . $maxgroup . "s", $info["group"]) . " " . sprintf("%" . $maxfullsize . "s", number_format($info["filesize"], 0)) . ($percentages ? " " . sprintf("%" . $maxpercentagesize . "s", number_format(($info["compressedsize"] + 12) / $info["filesize"] * 100, 0) . "%") : "") . ($blocks ? " " . sprintf("%" . $maxblocknumsize . "s", $info["blocknum"]) : "") . " " . date("Y-M-d h:i A", $info["created"]) . "  ";
 					}
 
 					echo $name;

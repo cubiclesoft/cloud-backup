@@ -18,11 +18,13 @@
 	// Process the command-line options.
 	$options = array(
 		"shortmap" => array(
+			"d" => "defrag",
 			"f" => "force",
 			"p" => "skipprebackup",
 			"?" => "help"
 		),
 		"rules" => array(
+			"defrag" => array("arg" => false),
 			"force" => array("arg" => false),
 			"skipprebackup" => array("arg" => false),
 			"help" => array("arg" => false)
@@ -37,7 +39,9 @@
 		echo "\n";
 		echo "Syntax:  " . $args["file"] . " [options]\n";
 		echo "Options:\n";
+		echo "\t-d   Defragment shared blocks.\n";
 		echo "\t-f   Bypass the most recent backup check and perform a backup anyway.\n";
+		echo "\t-p   Skip running the pre-backup commands.\n";
 		echo "\n";
 		echo "Examples:\n";
 		echo "\tphp " . $args["file"] . " -f\n";
@@ -131,6 +135,7 @@
 				"group" => array("STRING", 1, 255, "NOT NULL" => true),
 				"filesize" => array("INTEGER", 8, "UNSIGNED" => true, "NOT NULL" => true),
 				"realfilesize" => array("INTEGER", 8, "UNSIGNED" => true, "NOT NULL" => true),
+				"compressedsize" => array("INTEGER", 8, "UNSIGNED" => true, "NOT NULL" => true),
 				"lastmodified" => array("INTEGER", 8, "UNSIGNED" => true, "NOT NULL" => true),
 				"created" => array("INTEGER", 8, "UNSIGNED" => true, "NOT NULL" => true),
 				"lastdatachange" => array("INTEGER", 8, "UNSIGNED" => true, "NOT NULL" => true),
@@ -164,6 +169,51 @@
 	if ($deletefp === false)  CB_DisplayError("Unable to create deleted block tracker file '" . $rootpath . "/deleted.dat'.");
 
 	$servicehelper->SetDB($db);
+
+	// Handle defragmentation mode.
+	if (isset($args["opts"]["defrag"]))
+	{
+		// Find all shared blocks that are at least 2 times more empty than the small file limit and delete them.
+		$result = $db->Query("SELECT", array(
+			"blocknum, compressedsize",
+			"FROM" => "?",
+			"WHERE" => "blocknum > 0 AND sharedblock = 1",
+			"ORDER BY" => "blocknum",
+		), "files");
+
+		$keepsize = $config["blocksize"] - ($config["smallfilelimit"] * 2);
+		if ($keepsize < 0)  CB_DisplayError("The small file limit in the configuration prevents defragmentation.");
+		$lastblocknum = false;
+		while ($row = $result->NextRow())
+		{
+			if ($lastblocknum !== $row->blocknum)
+			{
+				if ($lastblocknum !== false && $size < $keepsize)
+				{
+					CB_Log("[Defrag] Remove block " . $lastblocknum);
+
+					$db->Query("DELETE", array("files", "WHERE" => "blocknum = ?"), $lastblocknum);
+
+					fwrite($deletefp, CB_PackInt64((double)$lastblocknum));
+				}
+
+				$lastblocknum = $row->blocknum;
+				$size = 0;
+			}
+
+			// There is an 8 byte ID + 4 byte size overhead in a shared block entry.
+			$size += $row->compressedsize + 12;
+		}
+
+		if ($lastblocknum !== false && $size < $keepsize)
+		{
+			CB_Log("[Defrag] Remove block " . $lastblocknum);
+
+			$db->Query("DELETE", array("files", "WHERE" => "blocknum = ?"), $lastblocknum);
+
+			fwrite($deletefp, CB_PackInt64((double)$lastblocknum));
+		}
+	}
 
 	// Initialize exclusions.
 	$exclusions = array();
@@ -230,6 +280,7 @@
 							"group" => CB_GetGroupName($info["gid"]),
 							"filesize" => $info["size"],
 							"realfilesize" => $info["size"],
+							"compressedsize" => "0",
 							"lastmodified" => $info["mtime"],
 							"created" => $info["ctime"],
 							"lastdatachange" => $info["mtime"],
@@ -343,6 +394,7 @@
 						"group" => $info["group"],
 						"filesize" => $info["filesize"],
 						"realfilesize" => $info["filesize"],
+						"compressedsize" => "0",
 						"lastmodified" => $info["lastmodified"],
 						"created" => $info["created"],
 						"lastdatachange" => $info["lastmodified"],
@@ -391,6 +443,7 @@
 						"owner" => $info["owner"],
 						"group" => $info["group"],
 						"filesize" => $info["filesize"],
+						"compressedsize" => (isset($info["orig_filesize"]) || isset($info["orig_lastmodified"]) ? "0" : $info["compressedsize"]),
 						"lastmodified" => $info["lastmodified"],
 						"created" => $info["created"],
 						"lastdatachange" => (isset($info["orig_filesize"]) && !isset($info["orig_lastmodified"]) ? time() : $info["lastmodified"]),
@@ -492,7 +545,9 @@
 		$incrementals = $result["incrementals"];
 	}
 
-	if ($config["uploaddatalimit"] > 0 && $servicehelper->GetBytesSent() >= $config["uploaddatalimit"])  CB_DisplayError("[Warning] Upload data limit reached.  Backup is incomplete.", false, false);
+	CB_Log("[Info] " . number_format($servicehelper->GetBytesSent(), 0) . " bytes sent.");
+
+	if ($config["uploaddatalimit"] > 0 && $servicehelper->GetBytesSent() >= $config["uploaddatalimit"])  CB_Log("[Warning] Upload data limit reached.  Backup is incomplete.");
 
 	if (count($config["notifications"]))
 	{

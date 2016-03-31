@@ -231,6 +231,7 @@
 				"owner" => $row->owner,
 				"group" => $row->group,
 				"filesize" => ($fordiff ? $row->filesize : $row->realfilesize),
+				"compressedsize" => $row->compressedsize,
 				"lastmodified" => $row->lastmodified,
 				"created" => $row->created,
 			);
@@ -546,6 +547,7 @@
 				$this->deflate->Init("wb");
 				$stagingdata = "";
 				$filesize = $realfilesize;
+				$compressedsize = 0;
 				$nextpart = 0;
 				while ($filesize)
 				{
@@ -557,7 +559,9 @@
 					if ($data !== "")
 					{
 						$this->deflate->Write($data);
-						$stagingdata .= $this->deflate->Read();
+						$data2 = $this->deflate->Read();
+						$compressedsize += strlen($data2);
+						$stagingdata .= $data2;
 
 						if (strlen($stagingdata) > $this->config["smallfilelimit"])  $shared = false;
 
@@ -567,7 +571,9 @@
 
 				// Last data chunk.
 				$this->deflate->Finalize();
-				$stagingdata .= $this->deflate->Read();
+				$data2 = $this->deflate->Read();
+				$compressedsize += strlen($data2);
+				$stagingdata .= $data2;
 				if ($stagingdata !== "")
 				{
 					if (strlen($stagingdata) > $this->config["smallfilelimit"])  $shared = false;
@@ -601,6 +607,7 @@
 						"blocknum" => ($realfilesize ? $this->sharedblocknum : 0),
 						"sharedblock" => "1",
 						"realfilesize" => $realfilesize,
+						"compressedsize" => $compressedsize,
 					), "WHERE" => "id = ?"), $id);
 				}
 				else if ($nextpart && $forcedblock === false)
@@ -608,6 +615,7 @@
 					$this->db->Query("UPDATE", array("files", array(
 						"blocknum" => $this->nextblock,
 						"realfilesize" => $realfilesize,
+						"compressedsize" => $compressedsize,
 					), "WHERE" => "id = ?"), $id);
 
 					$this->nextblock++;
