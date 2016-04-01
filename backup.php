@@ -221,6 +221,7 @@
 	$exclusions[$rootpath . "/config.dat"] = true;
 	$exclusions[$rootpath . "/deleted.dat"] = true;
 	$exclusions[$rootpath . "/files.db"] = true;
+	$exclusions[$rootpath . "/files_id.dat"] = true;
 	$exclusions[$rootpath . "/files2.db"] = true;
 	$exclusions[$rootpath . "/files2.db-journal"] = true;
 	$exclusions[$rootpath . "/support/cb_functions.php"] = true;
