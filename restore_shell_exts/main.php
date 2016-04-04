@@ -195,7 +195,7 @@
 						else  $attr .= "-";
 
 						// Output:  Attributes Owner Group Created Filesize[ Blocknum]
-						echo $attr . " " . sprintf("%-" . $maxowner . "s", $info["owner"]) . " " . sprintf("%-" . $maxgroup . "s", $info["group"]) . " " . sprintf("%" . $maxfullsize . "s", number_format($info["filesize"], 0)) . ($percentages ? " " . sprintf("%" . $maxpercentagesize . "s", ($info["blocknum"] > 0 ? number_format(($info["compressedsize"] + 12) / $info["filesize"] * 100, 0) . "%") : "-") : "") . ($blocks ? " " . sprintf("%" . $maxblocknumsize . "s", $info["blocknum"]) : "") . " " . date("Y-M-d h:i A", $info["created"]) . "  ";
+						echo $attr . " " . sprintf("%-" . $maxowner . "s", $info["owner"]) . " " . sprintf("%-" . $maxgroup . "s", $info["group"]) . " " . sprintf("%" . $maxfullsize . "s", number_format($info["filesize"], 0)) . ($percentages ? " " . sprintf("%" . $maxpercentagesize . "s", ($info["blocknum"] > 0 ? number_format(($info["compressedsize"] + 12) / $info["filesize"] * 100, 0) . "%" : "-")) : "") . ($blocks ? " " . sprintf("%" . $maxblocknumsize . "s", $info["blocknum"]) : "") . " " . date("Y-M-d h:i A", $info["created"]) . "  ";
 					}
 
 					echo $name;
@@ -284,7 +284,7 @@
 
 	function shell_cmd_stats($line)
 	{
-		global $db;
+		global $servicehelper;
 
 		$options = array(
 			"shortmap" => array(
@@ -310,20 +310,8 @@
 			return;
 		}
 
-		$numfiles = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 0"), "files");
-		$numsharedfiles = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
-		$numsharedblocks = (int)$db->GetOne("SELECT", array("COUNT(DISTINCT blocknum)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
-		$numemptyfiles = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 1"), "files");
-		$numsymlinks = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 0 AND symlink <> ''"), "files");
-		$numdirs = (int)$db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 0 AND symlink = ''"), "files");
+		$servicehelper->DisplayStats("");
 
-		echo "Symlinks:  " . number_format($numsymlinks, 0) . "\n";
-		echo "Folders:  " . number_format($numdirs, 0) . "\n";
-		echo "Files:\n";
-		echo "\t" . number_format($numsharedfiles, 0) . " shared (" . number_format($numsharedblocks, 0) . " blocks)\n";
-		echo "\t" . number_format($numfiles, 0) . " non-shared\n";
-		echo "\t" . number_format($numemptyfiles, 0) . " empty\n";
-		echo "\t" . number_format($numsharedfiles + $numfiles + $numemptyfiles, 0) . " total (" . number_format($numsharedblocks + $numfiles, 0) . " blocks)\n";
 		echo "\n";
 	}
 

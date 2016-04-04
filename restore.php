@@ -127,6 +127,8 @@
 		CB_DisplayError("Unable to connect to SQLite database.  " . $e->getMessage());
 	}
 
+	$servicehelper->SetDB($db);
+
 	function PathStackToStr($stack)
 	{
 		$result = "";

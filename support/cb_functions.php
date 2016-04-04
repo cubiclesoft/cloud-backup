@@ -495,6 +495,35 @@
 			$this->bytessent = 0;
 		}
 
+		public function DisplayStats($prefix)
+		{
+			$numfiles = (int)$this->db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 0"), "files");
+			$numsharedfiles = (int)$this->db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
+			$numsharedblocks = (int)$this->db->GetOne("SELECT", array("COUNT(DISTINCT blocknum)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
+			$numemptyfiles = (int)$this->db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 1"), "files");
+			$numsymlinks = (int)$this->db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 0 AND symlink <> ''"), "files");
+			$numdirs = (int)$this->db->GetOne("SELECT", array("COUNT(*)", "FROM" => "?", "WHERE" => "blocknum = 0 AND sharedblock = 0 AND symlink = ''"), "files");
+
+			$filesrealsize = (double)$this->db->GetOne("SELECT", array("SUM(realfilesize)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 0"), "files");
+			$filescompressedsize = (double)$this->db->GetOne("SELECT", array("SUM(compressedsize)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 0"), "files");
+			$sharedrealsize = (double)$this->db->GetOne("SELECT", array("SUM(realfilesize)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
+			$sharedcompressedsize = (double)$this->db->GetOne("SELECT", array("SUM(compressedsize)", "FROM" => "?", "WHERE" => "blocknum > 0 AND sharedblock = 1"), "files");
+
+			echo $prefix . "Symlinks:  " . number_format($numsymlinks, 0) . "\n";
+			echo $prefix . "Folders:  " . number_format($numdirs, 0) . "\n";
+			echo $prefix . "Files:\n";
+			echo $prefix . "\t" . number_format($numsharedfiles, 0) . " shared (" . number_format($numsharedblocks, 0) . " blocks)\n";
+			echo $prefix . "\t\t" . number_format($sharedrealsize, 0) . " bytes uncompressed\n";
+			echo $prefix . "\t\t" . number_format($sharedcompressedsize + 12.0 * $numsharedfiles, 0) . " bytes compressed (" . number_format(($sharedcompressedsize + 12.0 * $numsharedfiles) / $sharedrealsize * 100.0, 0) . "% of uncompressed)\n";
+			echo $prefix . "\t" . number_format($numfiles, 0) . " non-shared\n";
+			echo $prefix . "\t\t" . number_format($filesrealsize, 0) . " bytes uncompressed\n";
+			echo $prefix . "\t\t" . number_format($filescompressedsize, 0) . " bytes compressed (" . number_format($filescompressedsize / $filesrealsize * 100.0, 0) . "% of uncompressed)\n";
+			echo $prefix . "\t" . number_format($numemptyfiles, 0) . " empty\n";
+			echo $prefix . "\t" . number_format($numsharedfiles + $numfiles + $numemptyfiles, 0) . " total (" . number_format($numsharedblocks + $numfiles, 0) . " blocks)\n";
+			echo $prefix . "\t\t" . number_format($sharedrealsize + $filesrealsize, 0) . " bytes uncompressed\n";
+			echo $prefix . "\t\t" . number_format($sharedcompressedsize + 12.0 * $numsharedfiles + $filescompressedsize, 0) . " bytes compressed (" . number_format(($sharedcompressedsize + 12.0 * $numsharedfiles + $filescompressedsize) / ($sharedrealsize + $filesrealsize) * 100.0, 0) . "% of uncompressed)\n";
+		}
+
 		public function UploadFilePart(&$data, $blocknum, &$nextpart, $final = false)
 		{
 			// 32 bytes of overhead (4 byte prefix random, 4 byte data size, 20 byte hash, 4 byte suffix random).
