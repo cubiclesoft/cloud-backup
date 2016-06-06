@@ -54,10 +54,46 @@
 	$config = CB_LoadConfig();
 
 	// Terminate if the backup was run too recently.
+	// Does not send an e-mail notification due to CB_ServiceHelper() not being initialized.
 	if (!isset($args["opts"]["force"]) && file_exists($rootpath . "/files_id.dat") && filemtime($rootpath . "/files_id.dat") > time() - $config["backupretryrange"])  CB_DisplayError("The backup was run too recently.  Next backup can be run " . date("l, F j, Y @ g:i a", filemtime($rootpath . "/files_id.dat") + $config["backupretryrange"]) . ".  Use the -f option to force the backup to proceed anyway.");
 
 	$servicehelper = new CB_ServiceHelper();
 	$servicehelper->Init($config);
+
+	// Verify that monitored files have not changed.
+	foreach ($config["monitor"] as $filename)
+	{
+		if (!file_exists($filename))  CB_DisplayError("The monitored file '" . $filename . "' no longer exists.  Backup attempt terminated.");
+		if (!is_file($filename))  CB_DisplayError("The monitored file '" . $filename . "' is not a file (probably a directory).  Backup attempt terminated.");
+
+		$fp = @fopen($filename, "rb");
+		if ($fp === false)  CB_DisplayError("The monitored file '" . $filename . "' was not able to be opened.  Backup attempt terminated.");
+
+		// Calculate file hash.
+		$hash = hash_init("sha256");
+		do
+		{
+			$data = @fread($fp, 1048576);
+			if ($data === false)  $data = "";
+			hash_update($hash, $data);
+
+		} while ($data !== "");
+		$hash2 = hash_final($hash);
+		fclose($fp);
+
+		if (!isset($config["monitor_hashes"][$filename]))
+		{
+			CB_Log("[Monitor] First hash calculation of '" . $filename . "' resulted in a SHA256 hash value of '" . $hash2 . "'.");
+
+			$config["monitor_hashes"][$filename] = $hash2;
+
+			CB_SaveConfig($config);
+		}
+		else if ($config["monitor_hashes"][$filename] !== $hash2)
+		{
+			CB_DisplayError("The monitored file '" . $filename . "' is no longer the same.  Original hash was '" . $config["monitor_hashes"][$filename] . "'.  New hash is '" . $hash2 . "'.  Possible system compromise detected.  Backup attempt terminated.");
+		}
+	}
 
 	// Run pre-backup commands.
 	if (!isset($args["opts"]["skipprebackup"]))

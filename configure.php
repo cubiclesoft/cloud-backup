@@ -127,7 +127,7 @@
 				$options[$key] = trim(fgets(STDIN));
 			}
 
-			$service->Init($options);
+			$service->Init($options, $servicehelper);
 			$result = $service->Test();
 			if (!$result["success"])  CB_DisplayError("The backup service access test failed.  Try entering the information again.", $result, false);
 		} while (!$result["success"]);
@@ -190,6 +190,7 @@
 	echo "----------\n\n";
 	echo "Adjust backup paths/files.  Leave 'Command' empty to go to exclusion configuration.  Example commands:\n";
 	echo "\tadd /etc\n";
+	echo "\tadd /var/www\n";
 	echo "\tremove 4\n\n";
 	SetupPaths("backup_paths", "Current paths being backed up");
 	echo "Backup paths/files written to configuration.\n\n";
@@ -197,11 +198,23 @@
 	// Set up local system path/file exclusions.  Certain files in $rootpath are always implicitly excluded.
 	if (!isset($config["backup_exclusions"]))  $config["backup_exclusions"] = array();
 	echo "----------\n\n";
-	echo "Adjust backup path/file exclusions.  Leave 'Command' empty to go to pre-backup commands.  Example commands:\n";
+	echo "Adjust backup path/file exclusions.  Leave 'Command' empty to go to monitored files.  Example commands:\n";
 	echo "\tadd /var/log\n";
 	echo "\tremove 3\n\n";
 	SetupPaths("backup_exclusions", "Current paths being excluded from the backup");
 	echo "Backup exclusions written to configuration.\n\n";
+
+	// Set up local system honeypot.  Lightweight malware defense system.
+	if (!isset($config["monitor"]))  $config["monitor"] = array();
+	if (!isset($config["monitor_hashes"]))  $config["monitor_hashes"] = array();
+	echo "----------\n\n";
+	echo "Add the full path and filename of several files you will never make changes to or delete.  These don't even have to be files that you are backing up.  If the files ever change, any attempt to run the backup will fail.  In technical parlance, this is called a Honeypot.  Leave 'Command' empty to go to pre-backup commands.  Example commands:\n";
+	echo "\tadd /home/youruser/somephoto.jpg\n";
+	echo "\tadd /home/youruser/taxdocument.pdf\n";
+	echo "\tadd /home/youruser/downloadedfile.zip\n";
+	echo "\tremove 6\n\n";
+	SetupPaths("monitor", "Current files being monitored", false);
+	echo "Monitored files written to configuration.\n\n";
 
 	// Set up commands to execute before running the backup.
 	if (!isset($config["prebackup_commands"]))  $config["prebackup_commands"] = array();
