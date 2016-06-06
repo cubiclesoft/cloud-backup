@@ -3,8 +3,8 @@
 	// (C) 2016 CubicleSoft.  All Rights Reserved.
 
 	// Load dependencies.
-	if (!class_exists("HTTP"))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/http.php";
-	if (!class_exists("WebBrowser"))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/web_browser.php";
+	if (!class_exists("HTTP", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/http.php";
+	if (!class_exists("WebBrowser", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/web_browser.php";
 
 	class AmazonCloudDrive
 	{
@@ -97,8 +97,8 @@
 
 		public function InteractiveLogin()
 		{
-			if (!class_exists("simple_html_dom"))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/simple_html_dom.php";
-			if (!class_exists("TagFilter"))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/tag_filter.php";
+			if (!class_exists("simple_html_dom", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/simple_html_dom.php";
+			if (!class_exists("TagFilter", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/tag_filter.php";
 
 			echo self::ACD_Translate("***************\n");
 			echo self::ACD_Translate("Starting interactive login for Amazon Cloud Drive.\n\n");
