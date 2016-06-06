@@ -3,4 +3,4 @@ A flexible, powerful, and easy to use rolling incremental backup system that pus
 
 This tool is "experimental" at the moment.  It works but you are mostly on your own until documentation rolls out and is tested thoroughly in production environments.
 
-This backup system supports OpenDrive, Amazon Cloud Drive, Cloud Storage Server, and local backup.
+This backup system supports OpenDrive, Amazon Cloud Drive, Cloud Storage Server, and local backup methods.
