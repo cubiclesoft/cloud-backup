@@ -129,7 +129,10 @@
 	function CB_GetBackupServices()
 	{
 		$result = array(
-			"opendrive" => "OpenDrive"
+			"amazon_cloud_drive" => "Amazon Cloud Drive",
+			"cloud_storage_server" => "Cloud Storage Server",
+			"local" => "Local computer",
+			"opendrive" => "OpenDrive",
 		);
 
 		return $result;
@@ -394,7 +397,7 @@
 
 	class CB_ServiceHelper
 	{
-		private $config, $deflate, $rng, $cipher1, $cipher2, $sign, $service, $db, $nextblock, $sharedblockdata, $sharedblocknum, $bytessent;
+		private $config, $deflate, $rng, $cipher1, $cipher2, $sign, $service, $db, $nextblock, $sharedblockdata, $sharedblocknum, $bytessent, $img;
 
 		public function Init($config)
 		{
@@ -442,6 +445,7 @@
 			$this->sharedblockdata = "";
 			$this->sharedblocknum = -1;
 			$this->bytessent = 0;
+			$this->img = false;
 		}
 
 		public function InitService($config)
@@ -455,7 +459,7 @@
 			$servicename2 = "CB_Service_" . $servicename;
 			$this->service = new $servicename2;
 
-			if (isset($config["service_info"]["options"]))  $this->service->Init($config["service_info"]["options"]);
+			if (isset($config["service_info"]["options"]))  $this->service->Init($config["service_info"]["options"], $this);
 
 			return array("success" => true, "servicename" => $servicename, "service" => $this->service);
 		}
@@ -522,6 +526,60 @@
 			echo $prefix . "\t" . number_format($numsharedfiles + $numfiles + $numemptyfiles, 0) . " total (" . number_format($numsharedblocks + $numfiles, 0) . " blocks)\n";
 			echo $prefix . "\t\t" . number_format($sharedrealsize + $filesrealsize, 0) . " bytes uncompressed\n";
 			echo $prefix . "\t\t" . number_format($sharedcompressedsize + 12.0 * $numsharedfiles + $filescompressedsize, 0) . " bytes compressed (" . number_format(($sharedcompressedsize + 12.0 * $numsharedfiles + $filescompressedsize) / ($sharedrealsize + $filesrealsize) * 100.0, 0) . "% of uncompressed)\n";
+		}
+
+		public function ApplyPhoto(&$data)
+		{
+			if ($this->img === false)
+			{
+				if (!class_exists("HTTP"))  require_once $rootpath . "/support/http.php";
+				if (!class_exists("WebBrowser"))  require_once $rootpath . "/support/web_browser.php";
+
+				$web = new WebBrowser();
+				$result = $web->Process("https://unsplash.it/640/480/?random");
+				if (!$result["success"])  CB_DisplayError("A network error occurred while retrieving a photo from third-party service.", $result);
+				else if ($result["response"]["code"] != 200)  CB_DisplayError("Expected a 200 response from third-party photo service.  Received '" . $result["response"]["line"] . "'.", $result);
+
+				$this->img = $result["body"];
+			}
+
+			if (!function_exists("imagecreatefromstring"))  $imgdata = $this->img;
+			else
+			{
+				$img = imagecreatefromstring($this->img);
+				$textcolorfg = imagecolorallocate($img, 250, 250, 250);
+				$textcolorbg = imagecolorallocate($img, 34, 34, 34);
+
+				$text = date("D, M j, Y @ g:i a");
+				imagestring($img, 5, 11, 11, $text, $textcolorbg);
+				imagestring($img, 5, 10, 10, $text, $textcolorfg);
+
+				ob_start();
+				imagejpeg($img);
+				imagedestroy($img);
+				$imgdata = ob_get_contents();
+				ob_end_clean();
+			}
+
+			$data = substr($imgdata, 0, -2) . "\xFF\xE5\x73\x74\x6F\x72\x2D\x63\x62\x64\x61\x74\x00" . str_replace("\xFF", "\xFF\x00", $data) . substr($imgdata, -2);
+		}
+
+		public function UnapplyPhoto(&$data)
+		{
+			$str = "\xFF\xE5\x73\x74\x6F\x72\x2D\x63\x62\x64\x61\x74\x00";
+			$pos = strpos($data, $str);
+			if ($pos === false)  CB_DisplayError("Magic token is missing in the photo data.");
+			$pos += strlen($str);
+
+			$pos2 = strpos($data, "\xFF", $pos);
+			while ($pos2 !== false && substr($data, $pos2 + 1, 1) === "\x00")
+			{
+				$pos2 += 2;
+				$pos2 = strpos($data, "\xFF", $pos2);
+			}
+			if ($pos2 === false)  $pos2 = strlen($data);
+
+			$data = str_replace("\xFF\x00", "\xFF", substr($data, $pos, $pos2 - $pos));
 		}
 
 		public function UploadFilePart(&$data, $blocknum, &$nextpart, $final = false)

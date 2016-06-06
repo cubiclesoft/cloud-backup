@@ -38,11 +38,11 @@
 			return $result;
 		}
 
-		public function GetFolderList($parentid = "0")
+		public function GetFolderList($folderid = "0")
 		{
 			if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
 
-			return $this->RunAPI("GET", "folder/list.json/" . $this->sessionid . "/" . $parentid);
+			return $this->RunAPI("GET", "folder/list.json/" . $this->sessionid . "/" . $folderid);
 		}
 
 		public function GetObjectIDByName($folderid, $name)
@@ -71,14 +71,14 @@
 			return array("success" => true, "info" => $info);
 		}
 
-		public function CreateFolder($parentid, $name, $description = "", $mode = self::FOLDER_MODE_PRIVATE, $publicupload = false, $publicdisplay = false, $publicdownload = false)
+		public function CreateFolder($folderid, $name, $description = "", $mode = self::FOLDER_MODE_PRIVATE, $publicupload = false, $publicdisplay = false, $publicdownload = false)
 		{
 			if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
 
 			$options = array(
 				"session_id" => $this->sessionid,
 				"folder_name" => (string)$name,
-				"folder_sub_parent" => (string)$parentid,
+				"folder_sub_parent" => (string)$folderid,
 				"folder_is_public" => (string)$mode,
 				"folder_public_upl" => (string)(int)$publicupload,
 				"folder_public_display" => (string)(int)$publicdisplay,
@@ -280,7 +280,7 @@
 			return $result;
 		}
 
-		private function DownloadFile__Internal($response, $body, &$opts)
+		public function DownloadFile__Internal($response, $body, &$opts)
 		{
 			fwrite($opts["fp"], $body);
 
