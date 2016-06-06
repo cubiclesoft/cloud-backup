@@ -2,11 +2,11 @@
 	// Cloud-based backup service interface for OpenDrive.
 	// (C) 2016 CubicleSoft.  All Rights Reserved.
 
-	if (!class_exists("OpenDrive"))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/opendrive.php";
+	if (!class_exists("OpenDrive", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/sdk_opendrive.php";
 
 	class CB_Service_opendrive
 	{
-		private $options, $opendrive, $remotebasefolderid, $remotetempfolderid, $remotemergefolderid, $incrementals, $summary;
+		private $options, $servicehelper, $opendrive, $remotebasefolderid, $remotetempfolderid, $remotemergefolderid, $incrementals, $summary;
 
 		public function GetInitOptionKeys()
 		{
@@ -19,9 +19,10 @@
 			return $result;
 		}
 
-		public function Init($options)
+		public function Init($options, $servicehelper)
 		{
 			$this->options = $options;
+			$this->servicehelper = $servicehelper;
 			$this->opendrive = new OpenDrive();
 			$this->remotebasefolderid = false;
 			$this->incrementals = array();
@@ -153,12 +154,14 @@
 
 		public function UploadBlock($blocknum, $part, $data)
 		{
+			$filename = $blocknum . "_" . $part . ".dat";
+
 			// Cover over any OpenDrive upload issues by retrying with exponential fallback (up to 30 minutes).
 			$ts = time();
 			$currsleep = 5;
 			do
 			{
-				$result = $this->opendrive->UploadFile($this->remotetempfolderid, $blocknum . "_" . $part . ".dat", $data);
+				$result = $this->opendrive->UploadFile($this->remotetempfolderid, $filename, $data);
 				if (!$result["success"])  sleep($currsleep);
 				$currsleep *= 2;
 			} while (!$result["success"] && $ts > time() - 1800);
@@ -168,13 +171,15 @@
 
 		public function SaveSummary($summary)
 		{
+			$data = json_encode($summary);
+
 			// Upload the summary.
 			// Cover over any OpenDrive upload issues by retrying with exponential fallback (up to 30 minutes).
 			$ts = time();
 			$currsleep = 5;
 			do
 			{
-				$result = $this->opendrive->UploadFile($this->remotebasefolderid, "summary.json", json_encode($summary));
+				$result = $this->opendrive->UploadFile($this->remotebasefolderid, "summary.json", $data);
 				if (!$result["success"])  sleep($currsleep);
 				$currsleep *= 2;
 			} while (!$result["success"] && $ts > time() - 1800);
