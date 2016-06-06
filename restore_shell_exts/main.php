@@ -393,7 +393,7 @@
 			return;
 		}
 
-		$result = $db->Query("UPDATE", array("files", array(
+		$db->Query("UPDATE", array("files", array(
 			"owner" => $args["params"][1],
 		), "WHERE" => "owner = ?"), $args["params"][0]);
 	}
@@ -476,7 +476,7 @@
 			return;
 		}
 
-		$result = $db->Query("UPDATE", array("files", array(
+		$db->Query("UPDATE", array("files", array(
 			"group" => $args["params"][1],
 		), "WHERE" => "group = ?"), $args["params"][0]);
 	}
