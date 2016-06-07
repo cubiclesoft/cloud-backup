@@ -53,7 +53,7 @@
 		echo "----------\n\n";
 		echo "Set the data upload limit (in bytes).  This limits the amount of data to upload per backup run, which can be useful for annoying (and illegal) data caps.  Calculate your ideal limit with this formula:\n\n";
 		echo "The lesser of (Monthly data cap in bytes / 31 * percent of the data cap to use for backups) OR (upload speed in bytes per sec * number of seconds to run the backup).\n\n";
-		echo "Data upload limit in bytes:  ";
+		echo "Data upload limit in bytes (0 for unlimited):  ";
 		$limit = (double)trim(fgets(STDIN));
 		if ($limit < 0)  $limit = 0;
 
