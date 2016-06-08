@@ -243,7 +243,7 @@
 			return array("success" => true);
 		}
 
-		public function MoveBlockIntoMergeBackup($parts)
+		public function MoveBlockIntoMergeBackup($blocknum, $parts)
 		{
 			foreach ($parts as $part)
 			{
@@ -254,7 +254,7 @@
 			return array("success" => true);
 		}
 
-		public function MoveBlockIntoBase($parts)
+		public function MoveBlockIntoBase($blocknum, $parts)
 		{
 			foreach ($parts as $part)
 			{

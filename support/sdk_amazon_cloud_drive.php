@@ -505,7 +505,7 @@
 					"files" => array($fileinfo)
 				);
 
-				return $this->RunAPI("POST", $this->data["contenturl"] . "nodes?suppress=deduplication", $options);
+				return $this->RunAPI("POST", $this->data["contenturl"] . "nodes?suppress=deduplication", $options, 201);
 			}
 			else
 			{

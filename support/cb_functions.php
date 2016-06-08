@@ -51,7 +51,7 @@
 		);
 
 		$fromaddr = $notificationinfo["from"];
-		$subject = $notificationinfo["subject"];
+		$subject = $notificationinfo["subject"] . (strpos($textmsg, "[Error]") !== false ? " (with errors)" : "") . (strpos($textmsg, "[Warning]") !== false ? " (with warnings)" : "");
 		foreach ($notificationinfo["recipients"] as $toaddr)
 		{
 			// SMTP only.  No POP before SMTP support.
@@ -914,7 +914,7 @@
 				if (isset($blocklist[$blocknum]))
 				{
 					echo "\tMoving block " . $blocknum . " into merge backup folder.\n";
-					$result = $this->service->MoveBlockIntoMergeBackup($blocklist[$blocknum]);
+					$result = $this->service->MoveBlockIntoMergeBackup($blocknum, $blocklist[$blocknum]);
 					if (!$result["success"])  CB_DisplayError("Unable to move block " . $blocknum . " into merge backup directory.", $result);
 				}
 			}
@@ -928,7 +928,7 @@
 				if (isset($blocklist[$x]) && isset($blocklist2[$x]))
 				{
 					echo "\tMoving block " . $x . " into merge backup folder.\n";
-					$this->service->MoveBlockIntoMergeBackup($blocklist[$x]);
+					$this->service->MoveBlockIntoMergeBackup($x, $blocklist[$x]);
 
 					unset($blocklist[$x]);
 				}
@@ -938,7 +938,7 @@
 			echo "\tMoving incremental files into base.\n";
 			foreach ($blocklist2 as $blocknum => $parts)
 			{
-				$result = $this->service->MoveBlockIntoBase($parts);
+				$result = $this->service->MoveBlockIntoBase($blocknum, $parts);
 				if (!$result["success"])  CB_DisplayError("Unable to move block " . $blocknum . " into base.", $result);
 			}
 

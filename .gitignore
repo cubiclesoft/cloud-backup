@@ -1,6 +1,7 @@
 /config.*
 /files.db
 /files_id.dat
+/deleted.dat
 /files2.db
 /files2.db-journal
 /test.php

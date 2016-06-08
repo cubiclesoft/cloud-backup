@@ -6,7 +6,7 @@
 
 	class CB_Service_amazon_cloud_drive
 	{
-		private $options, $servicehelper, $acd, $remotebasefolderid, $remotetempfolderid, $remotemergefolderid, $incrementals, $summary;
+		private $options, $servicehelper, $acd, $remotebasefolderid, $remotetempfolderid, $remotetempblocklist, $remotemergefolderid, $remotemergeblocklist, $incrementals, $summary;
 
 		public function GetInitOptionKeys()
 		{
@@ -54,7 +54,7 @@
 			$this->options = $options;
 			$this->remotebasefolderid = false;
 			$this->incrementals = array();
-			$this->summary = array("incrementaltimes" => array(), "lastbackupid" => 0);
+			$this->summary = array("incrementaltimes" => array(), "blocklists" => array(), "lastbackupid" => 0);
 			$this->remotetempfolderid = false;
 			$this->remotemergefolderid = false;
 		}
@@ -135,7 +135,7 @@
 				if (!$result2["success"])  return $result2;
 
 				$this->summary = @json_decode($result2["body"], true);
-				if (!is_array($this->summary))  $this->summary = array("incrementaltimes" => array(), "lastbackupid" => 0);
+				if (!is_array($this->summary))  $this->summary = array("incrementaltimes" => array(), "blocklists" => array(), "lastbackupid" => 0);
 			}
 
 			// Unset missing incrementals.
@@ -143,13 +143,19 @@
 			{
 				if (!isset($this->incrementals[$key]))  unset($this->summary["incrementaltimes"][$key]);
 			}
+			foreach ($this->summary["blocklists"] as $key => $val)
+			{
+				if (!isset($this->incrementals[$key]))  unset($this->summary["blocklists"][$key]);
+			}
 			foreach ($this->incrementals as $key => $val)
 			{
 				if (!isset($this->summary["incrementaltimes"][$key]))  unset($this->incrementals[$key]);
+				if (!isset($this->summary["blocklists"][$key]))  unset($this->incrementals[$key]);
 			}
 
 			ksort($this->incrementals);
 			ksort($this->summary["incrementaltimes"]);
+			ksort($this->summary["blocklists"]);
 
 			return array("success" => true, "incrementals" => $this->incrementals, "summary" => $this->summary);
 		}
@@ -160,6 +166,7 @@
 			if (!$result["success"])  return $result;
 
 			$this->remotetempfolderid = $result["body"]["id"];
+			$this->remotetempblocklist = array();
 
 			return array("success" => true);
 		}
@@ -175,6 +182,32 @@
 			do
 			{
 				$result = $this->acd->UploadFile($this->remotetempfolderid, $filename, $data, false);
+				if (!$result["success"])  sleep($currsleep);
+				$currsleep *= 2;
+			} while (!$result["success"] && $ts > time() - 1800);
+
+			if ($result["success"])
+			{
+				// Save the part to the block list.
+				if (!isset($this->remotetempblocklist[$blocknum]))  $this->remotetempblocklist[$blocknum] = array();
+				$this->remotetempblocklist[$blocknum][$part] = array("pid" => $this->remotebasefolderid, "id" => $result["body"]["id"], "name" => $filename);
+			}
+
+			return $result;
+		}
+
+		// Saving a precalculated block list saves a bunch of API calls later but reduces the ability to accurately handle file IDs.
+		public function SaveBlockList($folderid, $info)
+		{
+			$data = json_encode($info);
+
+			// Upload the block list.
+			// Cover over any Amazon Cloud Drive upload issues by retrying with exponential fallback (up to 30 minutes).
+			$ts = time();
+			$currsleep = 5;
+			do
+			{
+				$result = $this->acd->UploadFile($folderid, "blocklist.json", $data, false);
 				if (!$result["success"])  sleep($currsleep);
 				$currsleep *= 2;
 			} while (!$result["success"] && $ts > time() - 1800);
@@ -208,6 +241,12 @@
 			$summary["incrementaltimes"][] = time();
 			$summary["lastbackupid"] = $backupid;
 
+			// Save the block list.
+			$result = $this->SaveBlockList($this->remotetempfolderid, $this->remotetempblocklist);
+			if (!$result["success"])  return $result;
+
+			$summary["blocklists"][] = $result["body"]["id"];
+
 			// Move the TEMP folder to a new incremental.
 			$result = $this->acd->RenameObject($this->remotetempfolderid, (string)count($incrementals));
 			if (!$result["success"])  return $result;
@@ -228,20 +267,13 @@
 
 		public function GetIncrementalBlockList($id)
 		{
-			if (isset($this->incrementals[$id]))  $id = $this->incrementals[$id];
-			$result = $this->acd->GetFolderList($id);
+			if (isset($this->summary["blocklists"][$id]))  $id = $this->summary["blocklists"][$id];
+
+			$result = $this->acd->DownloadFile(false, $id);
 			if (!$result["success"])  return $result;
 
-			// Extract information.
-			$blocklist = array();
-			foreach ($result["files"] as $info2)
-			{
-				if (preg_match('/^(\d+)_(\d+)\.' . ($this->options["cb_embed"] ? "jpg" : "dat") . '$/', $info2["name"], $matches))
-				{
-					if (!isset($blocklist[$matches[1]]))  $blocklist[$matches[1]] = array();
-					$blocklist[$matches[1]][$matches[2]] = array("pid" => $id, "id" => $info2["id"], "name" => $info2["name"]);
-				}
-			}
+			$blocklist = @json_decode($result["body"], true);
+			if (!is_array($blocklist))  return array("success" => false, "error" => "Block list on Amazon Cloud Drive is corrupt.", "errorcode" => "corrupt_data");
 
 			return array("success" => true, "blocklist" => $blocklist);
 		}
@@ -270,10 +302,15 @@
 				$this->remotemergefolderid = $result["body"]["id"];
 			}
 
+			$result = $this->GetIncrementalBlockList(0);
+			if (!$result["success"])  return $result;
+
+			$this->remotemergeblocklist = $result["blocklist"];
+
 			return array("success" => true);
 		}
 
-		public function MoveBlockIntoMergeBackup($parts)
+		public function MoveBlockIntoMergeBackup($blocknum, $parts)
 		{
 			foreach ($parts as $part)
 			{
@@ -281,16 +318,23 @@
 				if (!$result["success"])  return $result;
 			}
 
+			unset($this->remotemergeblocklist[$blocknum]);
+
 			return array("success" => true);
 		}
 
-		public function MoveBlockIntoBase($parts)
+		public function MoveBlockIntoBase($blocknum, $parts)
 		{
+			$parts2 = array();
 			foreach ($parts as $part)
 			{
 				$result = $this->acd->MoveObject($part["pid"], $part["id"], $this->incrementals[0]);
 				if (!$result["success"])  return $result;
+
+				$parts2[] = array("pid" => $this->incrementals[0], "id" => $part["id"], "name" => $part["name"]);
 			}
+
+			$this->remotemergeblocklist[$blocknum] = $parts2;
 
 			return array("success" => true);
 		}
@@ -311,6 +355,12 @@
 			$summary = $this->summary;
 			$summary["incrementaltimes"] = array();
 			$summary["incrementaltimes"][0] = $this->summary["incrementaltimes"][1];
+			$summary["blocklists"] = array();
+
+			$result = $this->SaveBlockList($this->incrementals[0], $this->remotemergeblocklist);
+			if (!$result["success"])  return $result;
+
+			$summary["blocklists"][0] = $result["body"]["id"];
 			foreach ($this->incrementals as $num => $id)
 			{
 				echo "\tRenaming incremental '" . $id . "' (" . $num . ") to " . count($incrementals) . ".\n";
@@ -319,6 +369,7 @@
 
 				$incrementals[] = $id;
 				$summary["incrementaltimes"][] = $this->summary["incrementaltimes"][$num];
+				$summary["blocklists"][] = $this->summary["blocklists"][$num];
 			}
 
 			// Save the summary information.
