@@ -188,13 +188,15 @@
 					$info = @lstat($path . "/" . $file);
 					if ($info !== false)
 					{
+						$symlink = (is_link($path . "/" . $file) ? readlink($path . "/" . $file) : "");
+
 						$result[$file] = array(
 							"name" => $file,
-							"symlink" => (is_link($path . "/" . $file) ? readlink($path . "/" . $file) : ""),
+							"symlink" => $symlink,
 							"attributes" => $info["mode"],
 							"owner" => CB_GetUserName($info["uid"]),
 							"group" => CB_GetGroupName($info["gid"]),
-							"filesize" => (string)$info["size"],
+							"filesize" => (string)($symlink !== "" || CB_IsDir($info["mode"]) ? 0 : $info["size"]),
 							"lastmodified" => (string)$info["mtime"],
 							"created" => (string)$info["ctime"],
 						);
