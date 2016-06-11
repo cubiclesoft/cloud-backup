@@ -190,7 +190,7 @@
 			{
 				// Save the part to the block list.
 				if (!isset($this->remotetempblocklist[$blocknum]))  $this->remotetempblocklist[$blocknum] = array();
-				$this->remotetempblocklist[$blocknum][$part] = array("pid" => $this->remotebasefolderid, "id" => $result["body"]["id"], "name" => $filename);
+				$this->remotetempblocklist[$blocknum][$part] = array("pid" => $this->remotetempfolderid, "id" => $result["body"]["id"], "name" => $filename);
 			}
 
 			return $result;
@@ -357,7 +357,8 @@
 			$summary["incrementaltimes"][0] = $this->summary["incrementaltimes"][1];
 			$summary["blocklists"] = array();
 
-			$result = $this->SaveBlockList($this->incrementals[0], $this->remotemergeblocklist);
+			echo "\tSaving updated block list.\n";
+			$result = $this->SaveBlockList($incrementals[0], $this->remotemergeblocklist);
 			if (!$result["success"])  return $result;
 
 			$summary["blocklists"][0] = $result["body"]["id"];
