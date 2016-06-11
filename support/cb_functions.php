@@ -594,13 +594,11 @@
 			if ($pos === false)  CB_DisplayError("Magic token is missing in the photo data.");
 			$pos += strlen($str);
 
-			$pos2 = strpos($data, "\xFF", $pos);
-			while ($pos2 !== false && substr($data, $pos2 + 1, 1) === "\x00")
+			$y = strlen($data);
+			for ($pos2 = $pos; $pos2 < $y - 1 && ($data{$pos2} !== "\xFF" || $data{$pos2 + 1} === "\x00"); $pos2++)
 			{
-				$pos2 += 2;
-				$pos2 = strpos($data, "\xFF", $pos2);
 			}
-			if ($pos2 === false)  $pos2 = strlen($data);
+			if ($pos2 == $y - 1)  $pos2 = $y;
 
 			$data = str_replace("\xFF\x00", "\xFF", substr($data, $pos, $pos2 - $pos));
 		}
