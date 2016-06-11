@@ -26,7 +26,7 @@
 			$this->servicehelper = $servicehelper;
 			$this->remotebasefolder = false;
 			$this->incrementals = array();
-			$this->summary = array("incrementaltimes" => array(), "lastbackupid" => 0);
+			$this->summary = array();
 			$this->remotetempfolder = false;
 			$this->remotemergefolder = false;
 		}
@@ -88,8 +88,17 @@
 				$data = file_get_contents($this->remotebasefolder . "/summary.json");
 
 				$this->summary = @json_decode($data, true);
-				if (!is_array($this->summary))  $this->summary = array("incrementaltimes" => array(), "lastbackupid" => 0);
+				if (!is_array($this->summary))  $this->summary = array();
 			}
+
+			// Initialize summary.
+			if (!isset($this->summary["incrementaltimes"]))  $this->summary["incrementaltimes"] = array();
+			if (!isset($this->summary["lastbackupid"]))  $this->summary["lastbackupid"] = 0;
+			if (!isset($this->summary["mergeops"]))  $this->summary["mergeops"] = array();
+
+			// Process remaining merge operations to restore backup stability.
+			$result = $this->ProcessMergeOps();
+			if (!$result["success"])  return $result;
 
 			// Unset missing incrementals.
 			foreach ($this->summary["incrementaltimes"] as $key => $val)
@@ -234,47 +243,86 @@
 			return array("success" => true);
 		}
 
+		private function ProcessMergeOps()
+		{
+			while (count($this->summary["mergeops"]))
+			{
+				$currop = array_shift($this->summary["mergeops"]);
+
+				if (isset($currop["msg"]))  echo "\t" . $currop["msg"] . "\n";
+
+				switch ($currop["type"])
+				{
+					case "delete":
+					{
+						$result = $this->DeleteFolder($currop["info"]);
+						if (!$result["success"])  return $result;
+
+						break;
+					}
+					case "rename":
+					{
+						$result = @rename($currop["info"][0], $currop["info"][1]);
+						if ($result === false)  return array("success" => false, "error" => self::LTranslate("Unable to move '%s' to '%s'.", $currop["info"][0], $currop["info"][1]), "errorcode" => "rename_failed");
+
+						break;
+					}
+					case "savesummary":
+					{
+						$result = $this->SaveSummary($currop["info"][0]);
+						if (!$result["success"])  return $result;
+
+						$this->summary = $currop["info"][0];
+						$this->incrementals = $currop["info"][1];
+
+						break;
+					}
+					default:
+					{
+						return array("success" => false, "error" => "Unknown merge operation '" . $currop["type"] . "'.", "errorcode" => "unknown_merge_op");
+					}
+				}
+
+				if ($currop["type"] !== "savesummary")
+				{
+					$result = $this->SaveSummary($this->summary);
+					if (!$result["success"])  return $result;
+				}
+			}
+
+			return array("success" => true);
+		}
+
 		public function FinishMergeDown()
 		{
-			// When this function is called, the first incremental is assumed to be empty.
-			echo "\tDeleting incremental '" . $this->incrementals[1] . "' (1)\n";
-			$result = $this->DeleteFolder($this->remotebasefolder . "/" . $this->incrementals[1]);
-			if (!$result["success"])  return $result;
+			// Queue up merge operations.
+			$this->summary["mergeops"][] = array("msg" => "Deleting incremental '" . $this->incrementals[1] . "' (1)", "type" => "delete", "info" => $this->remotebasefolder . "/" . $this->incrementals[1]);
 
-			unset($this->incrementals[1]);
-
-			// Rename later incrementals.
 			$incrementals = array();
 			$incrementals[0] = $this->incrementals[0];
-			unset($this->incrementals[0]);
 			$summary = $this->summary;
 			$summary["incrementaltimes"] = array();
 			$summary["incrementaltimes"][0] = $this->summary["incrementaltimes"][1];
+			$summary["mergeops"] = array();
 			foreach ($this->incrementals as $num => $id)
 			{
-				echo "\tRenaming incremental '" . $id . "' (" . $num . ") to " . count($incrementals) . ".\n";
+				if ($num < 2)  continue;
 
-				$srcfilename = $this->remotebasefolder . "/" . $id;
-				$destfilename = $this->remotebasefolder . "/" . (string)count($incrementals);
-
-				$result = @rename($srcfilename, $destfilename);
-				if ($result === false)  return array("success" => false, "error" => self::LTranslate("Unable to move '%s' to '%s'.", $srcfilename, $destfilename), "errorcode" => "rename_failed");
+				$this->summary["mergeops"][] = array("msg" => "Renaming incremental '" . $id . "' (" . $num . ") to " . count($incrementals) . ".", "type" => "rename", "info" => array($this->remotebasefolder . "/" . $id, $this->remotebasefolder . "/" . (string)count($incrementals)));
 
 				$incrementals[] = $id;
 				$summary["incrementaltimes"][] = $this->summary["incrementaltimes"][$num];
 			}
 
-			// Save the summary information.
-			echo "\tSaving summary.\n";
-			$result = $this->SaveSummary($summary);
+			$this->summary["mergeops"][] = array("msg" => "Deleting '" . $this->remotemergefolder . "'", "type" => "delete", "info" => $this->remotemergefolder);
+			$this->summary["mergeops"][] = array("msg" => "Saving summary.", "type" => "savesummary", "info" => array($summary, $incrementals));
+
+			// Save the queue.
+			$result = $this->SaveSummary($this->summary);
 			if (!$result["success"])  return $result;
 
-			$this->summary = $summary;
-			$this->incrementals = $incrementals;
-
-			// Reset merge down status.
-			echo "\tDeleting '" . $this->remotemergefolder . "'\n";
-			$result = $this->DeleteFolder($this->remotemergefolder);
+			// Atomically process merge operations.
+			$result = $this->ProcessMergeOps();
 			if (!$result["success"])  return $result;
 
 			$this->remotemergefolder = false;

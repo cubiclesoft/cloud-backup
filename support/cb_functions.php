@@ -915,7 +915,7 @@
 				{
 					echo "\tMoving block " . $blocknum . " into merge backup folder.\n";
 					$result = $this->service->MoveBlockIntoMergeBackup($blocknum, $blocklist[$blocknum]);
-					if (!$result["success"])  CB_DisplayError("Unable to move block " . $blocknum . " into merge backup directory.", $result);
+					if (!$result["success"])  CB_DisplayError("Unable to move block " . $blocknum . " into merge backup directory.", $result, (!isset($result["nonfatal"]) || !$result["nonfatal"]));
 				}
 			}
 			fclose($fp);
@@ -939,7 +939,7 @@
 			foreach ($blocklist2 as $blocknum => $parts)
 			{
 				$result = $this->service->MoveBlockIntoBase($blocknum, $parts);
-				if (!$result["success"])  CB_DisplayError("Unable to move block " . $blocknum . " into base.", $result);
+				if (!$result["success"])  CB_DisplayError("Unable to move block " . $blocknum . " into base.", $result, (!isset($result["nonfatal"]) || !$result["nonfatal"]));
 			}
 
 			// Finalize merge operation.
