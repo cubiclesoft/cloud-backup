@@ -168,7 +168,7 @@
 				{
 					$path = ($checkpaths ? @realpath($cmd2[1]) : $cmd2[1]);
 					if ($path !== false && $checkpaths && is_dir($path))  $config[$configkey][] = $path;
-					else if ($path !== false && !$checkpaths && file_exists($path))  $config[$configkey][] = $path;
+					else if ($path !== false && !$checkpaths)  $config[$configkey][] = $path;
 					else  echo "The path '" . ($path !== false ? $path : $cmd2[1]) . "' does not exist.\n";
 				}
 				else if (strtolower($cmd2[0]) === "remove")
