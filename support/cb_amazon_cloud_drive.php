@@ -420,7 +420,7 @@
 		{
 			// Queue up merge operations.
 			$this->summary["mergeops"][] = array("msg" => "Deleting incremental '" . $this->incrementals[1] . "' (1)", "type" => "delete", "info" => $this->incrementals[1]);
-			$this->summary["mergeops"][] = array("msg" => "Saving updated block list.", "type" => "saveblocklist", "info" => array($incrementals[0], $this->remotemergeblocklist));
+			$this->summary["mergeops"][] = array("msg" => "Saving updated block list.", "type" => "saveblocklist", "info" => array($this->incrementals[0], $this->remotemergeblocklist));
 
 			$incrementals = array();
 			$incrementals[0] = $this->incrementals[0];

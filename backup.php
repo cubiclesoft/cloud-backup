@@ -45,6 +45,7 @@
 		echo "\n";
 		echo "Examples:\n";
 		echo "\tphp " . $args["file"] . " -f\n";
+		echo "\tphp " . $args["file"] . " -p\n";
 
 		exit();
 	}

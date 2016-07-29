@@ -133,7 +133,7 @@
 				}
 				else if ($result2["response"]["code"] != 200)
 				{
-					return array("success" => false, "error" => self::ACD_Translate("Expected a 200 response from Amazon.  Received '%s'.", $result["response"]["line"]), "errorcode" => "unexpected_amazon_response", "info" => $result2);
+					return array("success" => false, "error" => self::ACD_Translate("Expected a 200 response from Amazon.  Received '%s'.", $result2["response"]["line"]), "errorcode" => "unexpected_amazon_response", "info" => $result2);
 				}
 				else
 				{
