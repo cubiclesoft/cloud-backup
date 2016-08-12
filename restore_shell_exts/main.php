@@ -429,14 +429,14 @@
 		if (!function_exists("posix_getgrnam"))  echo "[Notice] The PHP function posix_getgrnam() does not exist.  The POSIX PHP extension is not enabled or not available for this OS.\n";
 
 		$result = $db->Query("SELECT", array(
-			"DISTINCT group",
+			"DISTINCT " . $db->QuoteIdentifier("group"),
 			"FROM" => "?",
-			"ORDER BY" => "group"
+			"ORDER BY" => $db->QuoteIdentifier("group")
 		), "files");
 
 		while ($row = $result->NextRow())
 		{
-			echo $row->owner . " - ";
+			echo $row->group . " - ";
 
 			if (!function_exists("posix_getgrnam"))  echo "[Missing]\n";
 			else
@@ -478,7 +478,7 @@
 
 		$db->Query("UPDATE", array("files", array(
 			"group" => $args["params"][1],
-		), "WHERE" => "group = ?"), $args["params"][0]);
+		), "WHERE" => $db->QuoteIdentifier("group") . " = ?"), $args["params"][0]);
 	}
 
 	function shell_cmd_restore($line)

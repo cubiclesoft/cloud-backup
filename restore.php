@@ -42,7 +42,7 @@
 		{
 			while (($file = readdir($dir)) !== false)
 			{
-				if (substr($file, 0, 7) === "restore_")  @unlink($rootpath . "/cache/" . $file);
+				if (substr($file, 0, 8) === "restore_")  @unlink($rootpath . "/cache/" . $file);
 			}
 
 			closedir($dir);

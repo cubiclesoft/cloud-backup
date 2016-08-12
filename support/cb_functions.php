@@ -778,7 +778,6 @@
 			else
 			{
 				// Uncompress the data.
-				$this->deflate->Init("rb");
 				while ($data !== "")
 				{
 					$size = (strlen($data) > 1048576 ? 1048576 : strlen($data));
@@ -787,10 +786,6 @@
 					$data2 = $this->deflate->Read();
 					if ($data2 !== "")  fwrite($destfp, $data2);
 				}
-
-				$this->deflate->Finalize();
-				$data2 = $this->deflate->Read();
-				if ($data2 !== "")  fwrite($destfp, $data2);
 			}
 
 			return true;
@@ -812,11 +807,20 @@
 			$fp = fopen($destfilename, "wb");
 			if ($fp === false)  CB_DisplayError("Unable to create file '" . $destfilename . "'.");
 
+			if (!$sharedblock)  $this->deflate->Init("rb");
+
 			foreach ($blockparts as $partnum => $info)
 			{
 				$result = $this->service->DownloadBlock($info);
 				if (!$result["success"])  CB_DisplayError("Unable to download block " . $blocknum . ":" . $partnum . " from incremental " . $incrementalid . ".", $result);
 				if (!$this->ExtractBlock($fp, $result["data"], $sharedblock))  CB_DisplayError("Unable to decrypt/uncompress block " . $blocknum . ":" . $partnum . " from incremental " . $incrementalid . ".  Possible data corruption detected.", $result);
+			}
+
+			if (!$sharedblock)
+			{
+				$this->deflate->Finalize();
+				$data2 = $this->deflate->Read();
+				if ($data2 !== "")  fwrite($fp, $data2);
 			}
 
 			fclose($fp);
