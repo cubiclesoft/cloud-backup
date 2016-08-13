@@ -261,6 +261,7 @@
 	$exclusions[$rootpath . "/files_id.dat"] = true;
 	$exclusions[$rootpath . "/files2.db"] = true;
 	$exclusions[$rootpath . "/files2.db-journal"] = true;
+	$exclusions[$rootpath . "/restore"] = true;
 	$exclusions[$rootpath . "/support/cb_functions.php"] = true;
 	foreach ($config["backup_exclusions"] as $path)
 	{
