@@ -42,7 +42,7 @@
 			{
 				$this->css->SetAccessInfo($this->options["host"], false, false, false);
 
-				$result = $css->GetSSLInfo();
+				$result = $this->css->GetSSLInfo();
 				if (!$result["success"])  return array("success" => false, "error" => "Unable to get SSL information.", "errorcode" => "get_ssl_info_failed", "info" => $result);
 
 				file_put_contents($rootpath . "/cache/css_ca.pem", $result["cacert"]);
