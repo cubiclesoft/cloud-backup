@@ -559,7 +559,7 @@
 				if (!class_exists("WebBrowser"))  require_once $rootpath . "/support/web_browser.php";
 
 				$web = new WebBrowser();
-				$result = $web->Process("https://unsplash.it/640/480/?random");
+				$result = $web->Process("https://source.unsplash.com/random/640x480");
 				if (!$result["success"])  CB_DisplayError("A network error occurred while retrieving a photo from third-party service.", $result);
 				else if ($result["response"]["code"] != 200)  CB_DisplayError("Expected a 200 response from third-party photo service.  Received '" . $result["response"]["line"] . "'.", $result);
 
