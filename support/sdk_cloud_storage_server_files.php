@@ -40,7 +40,12 @@
 
 			if ($this->cafile !== false && $this->cacert === false)  $this->cacert = @file_get_contents($this->cafile);
 
-			if ($this->cacert === false || $this->cert === false)
+			if (substr($this->host, 0, 7) === "http://")
+			{
+				$this->cacert = "";
+				$this->cert = "";
+			}
+			else if ($this->cacert === false || $this->cert === false)
 			{
 				$this->cacert = false;
 				$this->cert = false;
