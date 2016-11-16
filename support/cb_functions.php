@@ -50,6 +50,8 @@
 			"password" => $notificationinfo["password"]
 		);
 
+		if (isset($notificationinfo["sslopts"]))  $smtpoptions["sslopts"] = $notificationinfo["sslopts"];
+
 		$fromaddr = $notificationinfo["from"];
 		$subject = $notificationinfo["subject"] . (strpos($textmsg, "[Error]") !== false ? " (with errors)" : "") . (strpos($textmsg, "[Warning]") !== false ? " (with warnings)" : "");
 		foreach ($notificationinfo["recipients"] as $toaddr)

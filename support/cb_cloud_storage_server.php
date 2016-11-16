@@ -35,19 +35,10 @@
 		{
 			global $rootpath;
 
-			@mkdir($rootpath . "/cache");
+			@mkdir($rootpath . "/cache", 0775);
 
-			// Before anything can happen, the CA and server certificates need to be retrieved.
-			if (!file_exists($rootpath . "/cache/css_ca.pem") || !file_exists($rootpath . "/cache/css_cert.pem"))
-			{
-				$this->css->SetAccessInfo($this->options["host"], false, false, false);
-
-				$result = $this->css->GetSSLInfo();
-				if (!$result["success"])  return array("success" => false, "error" => "Unable to get SSL information.", "errorcode" => "get_ssl_info_failed", "info" => $result);
-
-				file_put_contents($rootpath . "/cache/css_ca.pem", $result["cacert"]);
-				file_put_contents($rootpath . "/cache/css_cert.pem", $result["cert"]);
-			}
+			$result = $this->css->InitSSLCache($this->options["host"], $rootpath . "/cache/css_ca.pem", $rootpath . "/cache/css_cert.pem");
+			if (!$result["success"])  return $result;
 
 			// Set access information.
 			$this->css->SetAccessInfo($this->options["host"], $this->options["apikey"], $rootpath . "/cache/css_ca.pem", file_get_contents($rootpath . "/cache/css_cert.pem"));

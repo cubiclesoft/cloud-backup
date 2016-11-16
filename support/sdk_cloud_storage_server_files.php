@@ -74,6 +74,22 @@
 			return array("success" => true, "cacert" => $this->cacert, "cert" => $this->cert);
 		}
 
+		public function InitSSLCache($host, $cafile, $certfile)
+		{
+			if (!file_exists($cafile) || !file_exists($certfile))
+			{
+				$this->SetAccessInfo($host, false, false, false);
+
+				$result = $this->GetSSLInfo();
+				if (!$result["success"])  return array("success" => false, "error" => "Unable to get SSL information.", "errorcode" => "get_ssl_info_failed", "info" => $result);
+
+				file_put_contents($cafile, $result["cacert"]);
+				file_put_contents($certfile, $result["cert"]);
+			}
+
+			return array("success" => true);
+		}
+
 		public function GetObjectByPath($path)
 		{
 			if (substr($path, 0, 1) !== "/")  $path = "/" . $path;
