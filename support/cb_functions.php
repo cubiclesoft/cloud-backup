@@ -69,14 +69,15 @@
 		foreach ($notifications as $notificationinfo)
 		{
 			$filter = $notificationinfo["filter"];
-			if ($filter === "")  $messages = $cb_messages;
-			else
+			if ($filter === "")  $filter = '/.*/';
+
+			$ignorefilter = $notificationinfo["ignorefilter"];
+			if ($ignorefilter === "")  $ignorefilter = '/^\b$/';
+
+			$messages = array();
+			foreach ($cb_messages as $line)
 			{
-				$messages = array();
-				foreach ($cb_messages as $line)
-				{
-					if (preg_match($filter, $line))  $messages[] = htmlspecialchars($line);
-				}
+				if (preg_match($filter, $line) && !preg_match($ignorefilter, $line))  $messages[] = htmlspecialchars($line);
 			}
 
 			if (count($messages))

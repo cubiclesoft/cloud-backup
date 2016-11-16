@@ -258,8 +258,10 @@
 		$cmd2 = explode(" ", $cmd);
 		if (strtolower($cmd2[0]) === "add")
 		{
-			echo "Filter (regular expression to apply to each backup line - optional):  ";
+			echo "Include filter (regular expression to apply to each backup line - optional):  ";
 			$filter = trim(fgets(STDIN));
+			echo "Ignore filter (regular expression to apply to each backup line - optional):  ";
+			$ignorefilter = trim(fgets(STDIN));
 			echo "FROM e-mail address:  ";
 			$from = trim(fgets(STDIN));
 			echo "Subject line (e.g. [Backup] Some computer name):  ";
@@ -290,6 +292,7 @@
 
 			$data = array(
 				"filter" => $filter,
+				"ignorefilter" => $ignorefilter,
 				"from" => $from,
 				"subject" => $subject,
 				"usemail" => $usemail,
