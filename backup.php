@@ -292,6 +292,7 @@
 			}
 			$basepath = str_replace("\\", "/", $basepath);
 			if (substr($basepath, -1) == "/")  $basepath = substr($basepath, 0, -1);
+			CB_DisplayError("[Processing] " . $basepath, false, false);
 			$parts = explode("/", $basepath);
 			$path2 = "";
 			foreach ($parts as $part)
