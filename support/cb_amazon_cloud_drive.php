@@ -327,7 +327,15 @@
 				$result = $this->acd->MoveObject($part["pid"], $part["id"], $this->remotemergefolderid);
 				if (!$result["success"])
 				{
-					if ($result["errorcode"] === "unexpected_amazon_response" && $result["info"]["response"]["code"] == 404)  $result["nonfatal"] = true;
+					if ($result["errorcode"] === "unexpected_amazon_response")
+					{
+						if ($result["info"]["response"]["code"] == 404)  $result["nonfatal"] = true;
+						else if ($result["info"]["response"]["code"] == 400)
+						{
+							$data = @json_decode($result["info"]["body"], true);
+							if (is_array($data) && isset($data["code"]) && $data["code"] === "INVALID_PARENT" && isset($data["info"]["parentId"]) && $data["info"]["parentId"] === $this->remotemergefolderid)  $result["nonfatal"] = true;
+						}
+					}
 
 					return $result;
 				}
@@ -346,7 +354,15 @@
 				$result = $this->acd->MoveObject($part["pid"], $part["id"], $this->incrementals[0]);
 				if (!$result["success"])
 				{
-					if ($result["errorcode"] === "unexpected_amazon_response" && $result["info"]["response"]["code"] == 404)  $result["nonfatal"] = true;
+					if ($result["errorcode"] === "unexpected_amazon_response")
+					{
+						if ($result["info"]["response"]["code"] == 404)  $result["nonfatal"] = true;
+						else if ($result["info"]["response"]["code"] == 400)
+						{
+							$data = @json_decode($result["info"]["body"], true);
+							if (is_array($data) && isset($data["code"]) && $data["code"] === "INVALID_PARENT" && isset($data["info"]["parentId"]) && $data["info"]["parentId"] === $this->incrementals[0])  $result["nonfatal"] = true;
+						}
+					}
 
 					return $result;
 				}
