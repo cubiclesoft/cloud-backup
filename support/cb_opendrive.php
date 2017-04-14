@@ -293,6 +293,8 @@
 
 		private function ProcessMergeOps()
 		{
+			$first = true;
+
 			while (count($this->summary["mergeops"]))
 			{
 				$currop = array_shift($this->summary["mergeops"]);
@@ -304,7 +306,15 @@
 					case "delete":
 					{
 						$result = $this->opendrive->TrashFolder($currop["info"], true);
-						if (!$result["success"])  return $result;
+						if (!$result["success"])
+						{
+							// Ignore an initial 404 error.
+							if ($first && $result["errorcode"] === "unexpected_opendrive_response" && $result["info"]["response"]["code"] == 404)  $result["nonfatal"] = true;
+							else
+							{
+								return $result;
+							}
+						}
 
 						break;
 					}
@@ -336,6 +346,8 @@
 					$result = $this->SaveSummary($this->summary);
 					if (!$result["success"])  return $result;
 				}
+
+				$first = false;
 			}
 
 			return array("success" => true);
