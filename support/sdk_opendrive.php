@@ -462,7 +462,14 @@
 				}
 			}
 
-			$result = $this->web->Process("https://dev.opendrive.com/api/v1/" . $apipath, "auto", $options2);
+			$retries = 3;
+			do
+			{
+				$result = $this->web->Process("https://dev.opendrive.com/api/v1/" . $apipath, "auto", $options2);
+
+				if (!$result["success"])  sleep(1);
+				$retries--;
+			} while (!$result["success"] && $retries > 0);
 
 			if (!$result["success"])  return $result;
 			if ($result["response"]["code"] != $expected)  return array("success" => false, "error" => self::OD_Translate("Expected a %d response from OpenDrive.  Received '%s'.", $expected, $result["response"]["line"]), "errorcode" => "unexpected_opendrive_response", "info" => $result);
