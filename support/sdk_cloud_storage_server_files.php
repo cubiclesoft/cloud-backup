@@ -5,6 +5,7 @@
 	// Load dependencies.
 	if (!class_exists("HTTP", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/http.php";
 	if (!class_exists("WebBrowser", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/web_browser.php";
+	if (!class_exists("RemotedAPI", false))  require_once str_replace("\\", "/", dirname(__FILE__)) . "/sdk_remotedapi.php";
 
 	// This class only supports the /files API.
 	class CloudStorageServerFiles
@@ -40,7 +41,7 @@
 
 			if ($this->cafile !== false && $this->cacert === false)  $this->cacert = @file_get_contents($this->cafile);
 
-			if (substr($this->host, 0, 7) === "http://")
+			if (substr($this->host, 0, 7) === "http://" || RemotedAPI::IsRemoted($this->host))
 			{
 				$this->cacert = "";
 				$this->cert = "";
@@ -361,6 +362,18 @@
 			if ($this->host === false || $this->apikey === false)  return array("success" => false, "error" => self::CSS_Translate("Missing host or API key."), "errorcode" => "no_access_info");
 			if ($this->cafile === false || $this->cert === false)  return array("success" => false, "error" => self::CSS_Translate("Missing SSL Certificate or Certificate Authority filename.  Call GetSSLInfo() to initialize for the first time and be sure to save the results."), "errorcode" => "critical_ssl_info_missing");
 
+			$url = $this->host;
+
+			// Handle Remoted API connections.
+			if ($this->fp === false && RemotedAPI::IsRemoted($this->host))
+			{
+				$result = RemotedAPI::Connect($this->host);
+				if (!$result["success"])  return $result;
+
+				$this->fp = $result["fp"];
+				$url = $result["url"];
+			}
+
 			if ($this->fp !== false)
 			{
 				$options2 = array(
@@ -395,7 +408,7 @@
 				$options2 = array_merge($options2, $options);
 			}
 
-			$result = $this->web->Process($this->host . "/files/v1/" . $apipath, "auto", $options2);
+			$result = $this->web->Process($url . "/files/v1/" . $apipath, "auto", $options2);
 
 			if (!$result["success"] && $this->fp !== false)
 			{
