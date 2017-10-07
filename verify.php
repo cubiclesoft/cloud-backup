@@ -132,10 +132,17 @@
 				), "files");
 
 				echo "\tVerifying that all blocks in the database are in the block list...\n";
+				$missing = 0;
 				while ($row = $result->NextRow())
 				{
-					if (!isset($blocklist[$row->blocknum]))  CB_DisplayError("Backup " . $x . " is missing block number " . $row->blocknum . ".  Backup is corrupt.");
+					if (!isset($blocklist[$row->blocknum]))
+					{
+						CB_DisplayError("[Error] Backup " . $x . " is missing block number " . $row->blocknum . ".", false, false);
+						$missing++;
+					}
 				}
+
+				if ($missing)  CB_DisplayError("Backup " . $x . " is missing " . ($missing == 1 ? "1 block" : $missing . " blocks") . ".  Backup is corrupt.");
 
 				// Select a random shared block.
 				echo "\tTesting shared block retrieval...\n";
