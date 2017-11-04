@@ -77,7 +77,7 @@
 			$messages = array();
 			foreach ($cb_messages as $line)
 			{
-				if (preg_match($filter, $line) && !preg_match($ignorefilter, $line))  $messages[] = htmlspecialchars($line);
+				if (strpos($line, "[Error]") !== false || (preg_match($filter, $line) && !preg_match($ignorefilter, $line)))  $messages[] = htmlspecialchars($line);
 			}
 
 			if (count($messages))
