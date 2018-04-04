@@ -124,7 +124,7 @@
 
 			do
 			{
-				$result2 = $web->Process($result["url"], "auto", $result["options"]);
+				$result2 = $web->Process($result["url"], $result["options"]);
 				if (!$result2["success"])
 				{
 					if ($this->data["refreshtoken"] === false)  return $result2;
@@ -577,7 +577,7 @@
 				$options2["headers"]["Authorization"] = "Bearer " . $this->data["bearertoken"];
 			}
 
-			$result = $this->web->Process($url, "auto", $options2);
+			$result = $this->web->Process($url, $options2);
 
 			if (!$result["success"])  return $result;
 			if ($result["response"]["code"] != $expected)  return array("success" => false, "error" => self::ACD_Translate("Expected a %d response from Amazon.  Received '%s'.", $expected, $result["response"]["line"]), "errorcode" => "unexpected_amazon_response", "info" => $result);

@@ -465,7 +465,7 @@
 			$retries = 3;
 			do
 			{
-				$result = $this->web->Process("https://dev.opendrive.com/api/v1/" . $apipath, "auto", $options2);
+				$result = $this->web->Process("https://dev.opendrive.com/api/v1/" . $apipath, $options2);
 
 				if (!$result["success"])  sleep(1);
 				$retries--;
