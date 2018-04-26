@@ -50,7 +50,10 @@
 			"password" => $notificationinfo["password"]
 		);
 
-		if (isset($notificationinfo["sslopts"]))  $smtpoptions["sslopts"] = $notificationinfo["sslopts"];
+		foreach ($notificationinfo as $key => $val)
+		{
+			if ($key !== "filter" && $key !== "ignorefilter" && $key !== "from" && $key !== "subject" && $key !== "recipients")  $smtpoptions[$key] = $val;
+		}
 
 		$fromaddr = $notificationinfo["from"];
 		$subject = $notificationinfo["subject"] . (strpos($textmsg, "[Error]") !== false ? " (with errors)" : "") . (strpos($textmsg, "[Warning]") !== false ? " (with warnings)" : "");
@@ -69,7 +72,7 @@
 		foreach ($notifications as $notificationinfo)
 		{
 			$filter = $notificationinfo["filter"];
-			if ($filter === "")  $filter = '/.*/';
+			if ($filter === "")  $filter = '/^/';
 
 			$ignorefilter = $notificationinfo["ignorefilter"];
 			if ($ignorefilter === "")  $ignorefilter = '/^\b$/';
@@ -132,7 +135,6 @@
 	function CB_GetBackupServices()
 	{
 		$result = array(
-			"amazon_cloud_drive" => "Amazon Cloud Drive",
 			"cloud_storage_server" => "Cloud Storage Server",
 			"local" => "Local computer",
 			"opendrive" => "OpenDrive",
@@ -456,11 +458,11 @@
 			foreach ($this->config["encryption_key"] as $key => $val)  $encryptkey[$key] = hex2bin($val);
 
 			$this->rng = new CSPRNG();
-			$this->cipher1 = new phpseclib\Crypt\AES();
+			$this->cipher1 = new Crypt_AES();
 			$this->cipher1->setKey($encryptkey["key1"]);
 			$this->cipher1->setIV($encryptkey["iv1"]);
 			$this->cipher1->disablePadding();
-			$this->cipher2 = new phpseclib\Crypt\AES();
+			$this->cipher2 = new Crypt_AES();
 			$this->cipher2->setKey($encryptkey["key2"]);
 			$this->cipher2->setIV($encryptkey["iv2"]);
 			$this->cipher2->disablePadding();
