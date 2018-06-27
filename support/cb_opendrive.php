@@ -129,6 +129,7 @@
 			// Initialize summary.
 			if (!isset($this->summary["incrementaltimes"]))  $this->summary["incrementaltimes"] = array();
 			if (!isset($this->summary["lastbackupid"]))  $this->summary["lastbackupid"] = 0;
+			if (!isset($this->summary["nextblock"]))  $this->summary["nextblock"] = -1;
 			if (!isset($this->summary["mergeops"]))  $this->summary["mergeops"] = array();
 
 			// Process remaining merge operations to restore backup stability.
@@ -180,7 +181,7 @@
 
 		public function SaveSummary($summary)
 		{
-			$data = json_encode($summary);
+			$data = json_encode($summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
 			// Upload the summary.
 			// Cover over any OpenDrive upload issues by retrying with exponential fallback (up to 30 minutes).
@@ -196,13 +197,14 @@
 			return $result;
 		}
 
-		public function FinishBackup($backupid)
+		public function FinishBackup($backupid, $nextblock)
 		{
 			$summary = $this->summary;
 			$incrementals = $this->incrementals;
 
 			$summary["incrementaltimes"][] = time();
 			$summary["lastbackupid"] = $backupid;
+			$summary["nextblock"] = $nextblock;
 
 			// Move the TEMP folder to a new incremental.
 			$result = $this->opendrive->RenameFolder($this->remotetempfolderid, (string)count($incrementals));

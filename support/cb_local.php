@@ -94,6 +94,7 @@
 			// Initialize summary.
 			if (!isset($this->summary["incrementaltimes"]))  $this->summary["incrementaltimes"] = array();
 			if (!isset($this->summary["lastbackupid"]))  $this->summary["lastbackupid"] = 0;
+			if (!isset($this->summary["nextblock"]))  $this->summary["nextblock"] = -1;
 			if (!isset($this->summary["mergeops"]))  $this->summary["mergeops"] = array();
 
 			// Process remaining merge operations to restore backup stability.
@@ -140,19 +141,20 @@
 		{
 			$filename = $this->remotebasefolder . "/summary.json";
 
-			$result = @file_put_contents($filename, json_encode($summary));
+			$result = @file_put_contents($filename, json_encode($summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 			if ($result === false)  return array("success" => false, "error" => self::LTranslate("Unable to write data to '%s'.", $filename), "errorcode" => "invalid_filename");
 
 			return array("success" => true);
 		}
 
-		public function FinishBackup($backupid)
+		public function FinishBackup($backupid, $nextblock)
 		{
 			$summary = $this->summary;
 			$incrementals = $this->incrementals;
 
 			$summary["incrementaltimes"][] = time();
 			$summary["lastbackupid"] = $backupid;
+			$summary["nextblock"] = $nextblock;
 
 			// Move the TEMP folder to a new incremental.
 			$result = @rename($this->remotetempfolder, $this->remotebasefolder . "/" . (string)count($incrementals));

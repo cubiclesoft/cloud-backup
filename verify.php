@@ -90,12 +90,27 @@
 
 		$blocklist2 = $result["blocklist"];
 
+		unset($blocklist[0]);
+		unset($blocklist[1]);
+
+		$conflicts = 0;
 		foreach ($blocklist2 as $key => $val)
 		{
+			if (isset($blocklist[$key]))
+			{
+				CB_DisplayError("[Error] Backup " . $x . " already has block number " . $key . ".", false, false);
+				$conflicts++;
+			}
+
 			$blocklist[$key] = array("inc" => $x, "parts" => $val);
 
 			@unlink($rootpath . "/cache/verify_" . $key . ".dat");
 		}
+
+		if ($conflicts)  CB_DisplayError("Backup " . $x . " has " . ($conflicts == 1 ? "1 block" : $conflicts . " blocks") . " conflicting.  Backup needs repair.");
+
+		if (!isset($blocklist[0]))  CB_DisplayError("Missing the files database for the " . ($x ? "incremental " : "base ") . $x . ".  Backup needs repair.");
+		if (!isset($blocklist[1]))  CB_DisplayError("Missing the deleted blocks list for the " . ($x ? "incremental " : "base ") . $x . ".  Backup needs repair.");
 
 		if (isset($backups[$x]))
 		{

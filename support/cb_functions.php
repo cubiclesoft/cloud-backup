@@ -504,6 +504,7 @@
 
 			$result["servicename"] = $servicename;
 			$result["service"] = $this->service;
+			$this->nextblock = $result["summary"]["nextblock"];
 
 			return $result;
 		}
@@ -513,11 +514,13 @@
 			$this->db = $db;
 
 			// Retrieve the next block number.
-			$this->nextblock = (int)$this->db->GetOne("SELECT", array(
+			$nextblock = (int)$this->db->GetOne("SELECT", array(
 				"MAX(blocknum)",
 				"FROM" => "?",
 			), "files") + 1;
-			if ($this->nextblock < 10)  $this->nextblock = 10;
+			if ($nextblock < 10)  $nextblock = 10;
+
+			if ($this->nextblock < $nextblock)  $this->nextblock = $nextblock;
 
 			// Initialize the shared block.
 			$this->sharedblockdata = "";
@@ -525,6 +528,11 @@
 			$this->nextblock++;
 
 			$this->bytessent = 0;
+		}
+
+		public function GetNextBlock()
+		{
+			return $this->nextblock;
 		}
 
 		public function DisplayStats($prefix)

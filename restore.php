@@ -98,11 +98,17 @@
 			file_put_contents($filename, serialize($blocklist2));
 		}
 
+		unset($blocklist[0]);
+		unset($blocklist[1]);
+
 		foreach ($blocklist2 as $key => $val)
 		{
 			$blocklist[$key] = array("inc" => $x, "parts" => $val);
 		}
 	}
+
+	if (!isset($blocklist[0]))  CB_DisplayError("Missing the files database for the " . ($backupnum ? "incremental " : "base ") . $backupnum . ".  Backup needs repair.");
+	if (!isset($blocklist[1]))  CB_DisplayError("Missing the deleted blocks list for the " . ($backupnum ? "incremental " : "base ") . $backupnum . ".  Backup needs repair.");
 
 	// Retrieve the files database.
 	$filename = $rootpath . "/cache/restore_" . $backupnum . "_files.db";

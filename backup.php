@@ -565,7 +565,7 @@
 
 	// Finalize the service side of things.
 	$lastbackupid++;
-	$result = $service->FinishBackup($lastbackupid);
+	$result = $service->FinishBackup($lastbackupid, $servicehelper->GetNextBlock());
 	if (!$result["success"])  CB_DisplayError("Unable to finish the " . $servicename . " backup.", $result);
 
 	$incrementals = $result["incrementals"];
