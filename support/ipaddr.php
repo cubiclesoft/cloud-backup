@@ -1,10 +1,30 @@
 <?php
 	// CubicleSoft PHP IP Address functions.
-	// (C) 2013 CubicleSoft.  All Rights Reserved.
+	// (C) 2017 CubicleSoft.  All Rights Reserved.
 
 	class IPAddr
 	{
-		static function NormalizeIP($ipaddr)
+		public static function IsHostname($str)
+		{
+			$str = strtolower(str_replace(" ", "", $str));
+
+			$pos = strpos($str, ":");
+			if ($pos === false)
+			{
+				if (strpos($str, ".") === false || preg_match('/[^0-9.]/', $str))  return true;
+			}
+			else
+			{
+				$pos2 = strrpos($str, ":");
+				if ($pos2 !== false && $pos === $pos2)  return true;
+
+				if (preg_match('/[^0-9a-f:.]/', $str))  return true;
+			}
+
+			return false;
+		}
+
+		public static function NormalizeIP($ipaddr)
 		{
 			$ipv4addr = "";
 			$ipv6addr = "";
@@ -71,7 +91,7 @@
 			return array("ipv6" => $ipv6addr, "shortipv6" => $shortipv6, "ipv4" => $ipv4addr);
 		}
 
-		static function GetRemoteIP($proxies = array())
+		public static function GetRemoteIP($proxies = array())
 		{
 			$ipaddr = self::NormalizeIP(isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "127.0.0.1");
 
@@ -105,7 +125,7 @@
 			return $ipaddr;
 		}
 
-		static function IsMatch($pattern, $ipaddr)
+		public static function IsMatch($pattern, $ipaddr)
 		{
 			if (is_string($ipaddr))  $ipaddr = self::NormalizeIP($ipaddr);
 
