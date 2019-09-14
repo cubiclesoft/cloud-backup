@@ -30,7 +30,7 @@
 			"help" => array("arg" => false)
 		)
 	);
-	$args = ParseCommandLine($options);
+	$args = CLI::ParseCommandLine($options);
 
 	if (isset($args["opts"]["help"]))
 	{
