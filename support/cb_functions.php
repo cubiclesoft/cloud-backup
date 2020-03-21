@@ -304,7 +304,7 @@
 			$result = 0;
 			for ($x = 0; $x < 8; $x++)
 			{
-				$result = ($result * 256) + ord($data{$x});
+				$result = ($result * 256) + ord($data[$x]);
 			}
 
 			return $result;
@@ -608,7 +608,7 @@
 			$pos += strlen($str);
 
 			$y = strlen($data);
-			for ($pos2 = $pos; $pos2 < $y - 1 && ($data{$pos2} !== "\xFF" || $data{$pos2 + 1} === "\x00"); $pos2++)
+			for ($pos2 = $pos; $pos2 < $y - 1 && ($data[$pos2] !== "\xFF" || $data[$pos2 + 1] === "\x00"); $pos2++)
 			{
 			}
 			if ($pos2 == $y - 1)  $pos2 = $y;
