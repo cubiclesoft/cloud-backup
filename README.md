@@ -5,7 +5,7 @@ A flexible, powerful, and easy to use rolling incremental backup system that pus
 
 Cloud Backup is third generation backup software that works for every major platform that matters.
 
-[![Donate](https://cubiclesoft.com/res/donate-shield.png)](https://cubiclesoft.com/donate/)
+[![Donate](https://cubiclesoft.com/res/donate-shield.png)](https://cubiclesoft.com/donate/) [![Discord](https://img.shields.io/discord/777282089980526602?label=chat&logo=discord)](https://cubiclesoft.com/product-support/github/)
 
 Features
 --------
