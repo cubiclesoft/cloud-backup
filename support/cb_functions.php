@@ -378,7 +378,7 @@
 				do
 				{
 					$data = fread($fp, 10485760);
-					if ($data === false)  $data = "";
+					if ($data === false)  break;
 					$pos += strlen($data);
 				} while ($data !== "");
 			}
@@ -673,7 +673,12 @@
 				while ($filesize)
 				{
 					$data = fread($fp, ($filesize >= 1048576 ? 1048576 : $filesize));
-					if ($data === false)  $data = "";
+					if ($data === false)
+					{
+						fclose($fp);
+
+						return;
+					}
 
 					$filesize -= strlen($data);
 
