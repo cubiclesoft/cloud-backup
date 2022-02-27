@@ -85,7 +85,7 @@
 
 			if (count($messages))
 			{
-				$htmlmessage = "<html><body>" . str_replace("\n", "<br />\n", htmlspecialchars(implode("\n", $messages))) . "<br />\n</body></html>";
+				$htmlmessage = "<html><body>" . implode("<br>\n", $messages) . "<br />\n</body></html>";
 				$textmessage = implode("\n", $messages) . "\n";
 
 				CB_SendNotificationEmail($notificationinfo, $htmlmessage, $textmessage);
@@ -232,18 +232,18 @@
 		while ($row = $result2->NextRow())
 		{
 			$result[$row->name] = array(
-				"id" => $row->id,
-				"blocknum" => $row->blocknum,
+				"id" => (string)$row->id,
+				"blocknum" => (string)$row->blocknum,
 				"sharedblock" => (int)$row->sharedblock,
 				"name" => $row->name,
-				"symlink" => $row->symlink,
+				"symlink" => (string)$row->symlink,
 				"attributes" => (int)$row->attributes,
-				"owner" => $row->owner,
-				"group" => $row->group,
-				"filesize" => ($fordiff ? $row->filesize : $row->realfilesize),
+				"owner" => (string)$row->owner,
+				"group" => (string)$row->group,
+				"filesize" => (string)($fordiff ? $row->filesize : $row->realfilesize),
 				"compressedsize" => $row->compressedsize,
-				"lastmodified" => $row->lastmodified,
-				"created" => $row->created,
+				"lastmodified" => (string)$row->lastmodified,
+				"created" => (string)$row->created,
 			);
 		}
 
