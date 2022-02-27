@@ -231,11 +231,11 @@
 
 		while ($row = $result2->NextRow())
 		{
-			$result[$row->name] = array(
+			$result[(string)$row->name] = array(
 				"id" => (string)$row->id,
 				"blocknum" => (string)$row->blocknum,
 				"sharedblock" => (int)$row->sharedblock,
-				"name" => $row->name,
+				"name" => (string)$row->name,
 				"symlink" => (string)$row->symlink,
 				"attributes" => (int)$row->attributes,
 				"owner" => (string)$row->owner,
