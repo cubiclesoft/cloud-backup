@@ -487,10 +487,12 @@
 
 		$options = array(
 			"shortmap" => array(
-				"?" => "help"
+				"?" => "help",
+				"f" => "filesonly"
 			),
 			"rules" => array(
-				"help" => array("arg" => false)
+				"help" => array("arg" => false),
+				"filesonly" => array("arg" => false)
 			)
 		);
 		$args = CLI::ParseCommandLine($options, $line);
@@ -503,6 +505,7 @@
 			echo "Syntax:  " . $args["file"] . " [options] [path]\n";
 			echo "Options:\n";
 			echo "\t-?   This help documentation.\n";
+			echo "\t-f   Files only at the path, no directories.\n";
 			echo "\n";
 			echo "Example:  " . $args["file"] . " /\n";
 
@@ -527,7 +530,22 @@
 		$basepath .= "/" . date("Ymd_His");
 		@mkdir($basepath);
 
-		if (!isset($dirinfo["file"]))  $dirfiles = CB_GetDBFiles($id, false);
+
+
+		if (isset($dirinfo["dir"]))
+		{
+			$basepath .= "/" . $dirinfo["name"];
+			@mkdir($basepath);
+
+			// Adjust the symlink/directory/file to mirror the database.
+			@chmod($basepath, $dirinfo["dir"]->attributes & 07777);
+			if ($dirinfo["dir"]->owner !== "")  @chown($basepath, $dirinfo["dir"]->owner);
+			if ($dirinfo["dir"]->group !== "")  @chgrp($basepath, $dirinfo["dir"]->group);
+			@touch($basepath, $dirinfo["dir"]->lastmodified);
+
+			$dirfiles = CB_GetDBFiles($id, false);
+		}
+		else if (!isset($dirinfo["file"]))  $dirfiles = CB_GetDBFiles($id, false);
 		else
 		{
 			// Handle extraction of a single file.
@@ -582,6 +600,9 @@
 				}
 				else if (CB_IsDir($info["attributes"]))
 				{
+					// Skip directories if only extracting files for the current directory.
+					if (isset($args["opts"]["filesonly"]))  continue;
+
 					if (@mkdir($dirfile) === false)
 					{
 						CB_DisplayError("[Error] Unable to create directory '" . $dirfile . "'.", false, false);
@@ -665,6 +686,8 @@
 				CB_SendNotifications($config["notifications"]);
 			}
 		}
+
+		if (isset($dirinfo["dir"]))  @touch($basepath, $dirinfo["dir"]->lastmodified);
 
 		foreach ($sharedcache as $info2)  fclose($info2["fp"]);
 	}

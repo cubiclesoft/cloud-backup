@@ -195,7 +195,7 @@
 				}
 				else if (CB_IsDir((int)$row->attributes))
 				{
-					$result[] = array("id" => $row->id, "name" => $row->name);
+					$result[] = array("id" => $row->id, "name" => $row->name, "dir" => $row);
 				}
 				else
 				{
