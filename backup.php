@@ -1,6 +1,6 @@
 <?php
 	// Cloud-based backup tool.
-	// (C) 2016 CubicleSoft.  All Rights Reserved.
+	// (C) 2022 CubicleSoft.  All Rights Reserved.
 
 	if (!isset($_SERVER["argc"]) || !$_SERVER["argc"])
 	{
@@ -292,7 +292,7 @@
 			}
 			$basepath = str_replace("\\", "/", $basepath);
 			if (substr($basepath, -1) == "/")  $basepath = substr($basepath, 0, -1);
-			CB_DisplayError("[Processing] " . $basepath, false, false);
+			CB_Log("[Processing] " . $basepath);
 			$parts = explode("/", $basepath);
 			$path2 = "";
 			foreach ($parts as $part)
